@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>ScrollProgress baseline</title>
+  <style>
+    body{font:16px system-ui;margin:24px}button{font:inherit;padding:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:16px}.actions+button{margin-left:8px}details{margin-block:16px}summary{cursor:pointer;font-weight:600}.table-scroll{overflow-x:auto;margin-block:12px}table{border-collapse:collapse;min-width:900px;width:100%}th,td{border-bottom:1px solid #ccd;padding:8px;text-align:left;white-space:nowrap}th{background:#f4f5f7}td:first-child{white-space:normal}pre{white-space:pre-wrap}#fixture{height:240px;width:min(500px,90vw);overflow:auto;border:1px solid #345;position:relative}#benchmark-content{position:relative;height:800px}.target{position:absolute;top:100px;left:0;width:100px;height:100px}
+  </style>
+  <h1>ScrollProgress performance baseline</h1>
+  <p>Native DOM, no timing pass/fail thresholds. Keep this tab foreground and DevTools closed.</p>
+  <p>
+    Start quickly with <code>npm run benchmark:browser</code>, or use
+    <code>npm run consumer:browser</code> to validate the installed package. Then open the printed
+    benchmark link. Opening this HTML file directly does not run the tests.
+  </p>
+  <div class="actions">
+    <button type="button" data-benchmark-suite="core">Run core baseline</button>
+    <button type="button" data-benchmark-suite="debug">Run debug isolation</button>
+    <button type="button" data-benchmark-suite="all">Run all</button>
+  </div>
+  <a href="index.html">Smoke</a
+  ><button id="save-report" disabled>Save report (JSON)</button>
+  <p id="report-status" role="status">Report tools loading…</p>
+  <details>
+    <summary>Report details: browser, device and notes</summary>
+    <fieldset id="report-controls">
+      <legend>Fill in actual versions; the user agent may be incomplete.</legend>
+    </fieldset>
+  </details>
+  <div id="fixture"><div id="benchmark-content"></div></div>
+  <details id="benchmark-summary" open>
+    <summary>Performance summary</summary>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Trackers</th>
+            <th>Subscribers / tracker</th>
+            <th>Debug</th>
+            <th>Median</th>
+            <th>p95</th>
+            <th>Mean scheduling</th>
+            <th>Palette DOM churn</th>
+          </tr>
+        </thead>
+        <tbody id="benchmark-summary-body">
+          <tr>
+            <td colspan="8">Run a benchmark suite to see its scenarios.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <details id="benchmark-json">
+    <summary>Full JSON report</summary>
+    <pre id="results">Ready</pre>
+  </details>
+  <script type="module" src="./benchmark.js"></script>
+</html>

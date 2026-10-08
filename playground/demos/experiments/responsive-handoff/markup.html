@@ -1,0 +1,133 @@
+<div class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.2em] text-sky-300">Runtime reconfiguration</p>
+  <h2 class="mt-3 text-4xl font-semibold tracking-tight">
+    Hand one product card to a different scroll context
+  </h2>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> update one tracker from horizontal
+      custom-root geometry to vertical viewport geometry.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> switch between Wide and Compact, or choose Auto
+      and resize across <code>64rem</code>.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> root and axis change in place while the same
+      target and tracker remain active.
+    </p>
+  </div>
+</div>
+<div
+  data-responsive-demo
+  class="group/handoff mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]"
+>
+  <div class="min-w-0 rounded-3xl border border-sky-300/15 bg-sky-950/20 p-4 sm:p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex rounded-full border border-white/10 bg-black/20 p-1">
+        <button
+          type="button"
+          data-responsive-mode="auto"
+          aria-pressed="true"
+          class="rounded-full px-3 py-1.5 text-xs text-neutral-400 aria-pressed:bg-sky-200 aria-pressed:text-sky-950"
+        >
+          Auto
+        </button>
+        <button
+          type="button"
+          data-responsive-mode="wide"
+          aria-pressed="false"
+          class="rounded-full px-3 py-1.5 text-xs text-neutral-400 aria-pressed:bg-sky-200 aria-pressed:text-sky-950"
+        >
+          Wide
+        </button>
+        <button
+          type="button"
+          data-responsive-mode="compact"
+          aria-pressed="false"
+          class="rounded-full px-3 py-1.5 text-xs text-neutral-400 aria-pressed:bg-sky-200 aria-pressed:text-sky-950"
+        >
+          Compact
+        </button>
+      </div>
+      <p class="text-xs text-neutral-400">
+        requested
+        <output data-responsive-requested class="font-mono text-white">auto</output> · active
+        <output data-responsive-layout class="font-mono text-sky-200">wide</output>
+      </p>
+    </div>
+    <div
+      data-responsive-root
+      data-scroll-region
+      tabindex="0"
+      role="region"
+      aria-label="Responsive scroll rail"
+      class="group/handoff-root mt-5 rounded-2xl border border-white/10 bg-neutral-950 p-4 data-[layout=compact]:h-auto data-[layout=compact]:overflow-visible data-[layout=wide]:h-[32rem] data-[layout=wide]:overflow-x-auto data-[layout=wide]:overflow-y-hidden"
+    >
+      <div
+        class="flex flex-col gap-4 group-data-[layout=wide]/handoff-root:w-max group-data-[layout=wide]/handoff-root:flex-row"
+      >
+        <article
+          class="flex min-h-72 w-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 group-data-[layout=wide]/handoff-root:w-[22rem]"
+        >
+          <span class="text-xs text-neutral-500">01 · Untracked</span>
+          <h3 class="text-2xl font-semibold">Rail item 01</h3>
+        </article>
+        <article
+          class="flex min-h-72 w-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 group-data-[layout=wide]/handoff-root:w-[22rem]"
+        >
+          <span class="text-xs text-neutral-500">02 · Untracked</span>
+          <h3 class="text-2xl font-semibold">Rail item 02</h3>
+        </article>
+        <article
+          data-responsive-target
+          class="relative flex min-h-72 w-full flex-col justify-between overflow-hidden rounded-2xl border border-sky-300/40 bg-sky-300/10 p-6 group-data-[layout=wide]/handoff-root:w-[22rem]"
+        >
+          <div
+            class="absolute inset-x-0 bottom-0 h-1 origin-left bg-sky-300"
+            style="transform: scaleX(var(--handoff-progress, 0))"
+          ></div>
+          <span class="text-xs text-sky-300">03 · Tracked target</span>
+          <div>
+            <div class="mb-7 h-24 rounded-3xl bg-gradient-to-br from-sky-200 to-blue-700"></div>
+            <h3 class="text-2xl font-semibold">Tracked target</h3>
+          </div>
+        </article>
+        <article
+          class="flex min-h-72 w-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 group-data-[layout=wide]/handoff-root:w-[22rem]"
+        >
+          <span class="text-xs text-neutral-500">04 · Untracked</span>
+          <h3 class="text-2xl font-semibold">Rail item 04</h3>
+        </article>
+      </div>
+    </div>
+  </div>
+  <aside class="self-start rounded-3xl border border-white/10 bg-black/25 p-6 xl:sticky xl:top-24">
+    <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+      One tracker · current config
+    </p>
+    <dl class="mt-5 grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <dt class="text-neutral-500">root</dt>
+        <dd data-responsive-root-output class="font-mono">gallery element</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">axis</dt>
+        <dd data-responsive-axis class="font-mono">x</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">progress</dt>
+        <dd data-responsive-progress class="font-mono">0.000</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">scrollDirection</dt>
+        <dd data-responsive-scroll-direction class="font-mono">none</dd>
+      </div>
+      <div class="col-span-2">
+        <dt class="text-neutral-500">progressDirection</dt>
+        <dd data-responsive-progress-direction class="font-mono">none</dd>
+      </div>
+    </dl>
+    <ol data-responsive-timeline class="mt-6 space-y-3 text-xs leading-5 text-neutral-400"></ol>
+  </aside>
+</div>

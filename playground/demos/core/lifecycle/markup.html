@@ -1,0 +1,50 @@
+<div
+  data-core-target="lifecycle"
+  class="min-h-80 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-orange-300/50"
+>
+  <p class="text-base font-semibold text-orange-300">
+    Tracker lifecycle · <code>update / destroy</code>
+  </p>
+  <h3 class="mt-3 text-3xl font-semibold">Change, destroy and recreate explicitly</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> compare <code>update()</code>,
+      <code>destroy()</code> and a new tracker instance.
+    </p>
+    <p><strong class="text-neutral-200">Try:</strong> use each button in order.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> update preserves the tracker, destroy stops
+      it permanently, and recreate starts a new instance.
+    </p>
+  </div>
+  <output data-demo-progress="lifecycle" class="mt-10 block font-mono text-6xl">0.000</output>
+  <p class="mt-5 text-sm text-neutral-400">
+    Status: <span data-demo-tracking="lifecycle">idle</span>
+  </p>
+  <p class="mt-2 text-sm text-neutral-400">
+    Direction: <span data-demo-direction="lifecycle">none</span>
+  </p>
+  <div class="mt-8 flex flex-wrap gap-2">
+    <button
+      type="button"
+      data-lifecycle-update
+      class="rounded-full border border-orange-300/30 px-4 py-2 text-sm font-medium text-orange-100 hover:bg-orange-300/10"
+    >
+      Toggle inversion with update()
+    </button>
+    <button
+      type="button"
+      data-lifecycle-destroy
+      class="rounded-full border border-white/15 px-4 py-2 text-sm font-medium hover:bg-white/5"
+    >
+      Destroy
+    </button>
+    <button
+      type="button"
+      data-lifecycle-recreate
+      class="rounded-full border border-white/15 px-4 py-2 text-sm font-medium hover:bg-white/5"
+    >
+      Recreate
+    </button>
+  </div>
+</div>

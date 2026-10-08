@@ -1,0 +1,684 @@
+@use './default-theme';
+@use './tokens';
+
+/* Shell */
+.scroll-progress-debug-palette {
+    position: fixed;
+    right: var(--sp-debug-palette-token-viewport-spacing);
+    top: var(--sp-debug-palette-token-viewport-spacing);
+    z-index: var(--sp-debug-palette-token-z-index);
+    width: var(--sp-debug-palette-token-width);
+    max-height: calc(
+        var(--sp-debug-palette-token-max-height) -
+            (var(--sp-debug-palette-token-viewport-spacing) * 2)
+    );
+    overflow: auto;
+    overscroll-behavior-y: contain;
+    padding: 0 var(--sp-debug-palette-token-padding) var(--sp-debug-palette-token-padding);
+    border: var(--sp-debug-palette-token-border);
+    border-radius: var(--sp-debug-palette-token-radius);
+    background: var(--sp-debug-palette-token-surface);
+    color: var(--sp-debug-palette-token-text);
+    box-shadow: var(--sp-debug-palette-token-shadow);
+    font-family: var(--sp-debug-palette-token-font-family);
+    font-size: var(--sp-debug-palette-token-font-size);
+    line-height: 1.45;
+
+    &.spdp-is-collapsed {
+        width: auto;
+        min-width: var(--sp-debug-palette-token-width);
+        max-height: none;
+        overflow: hidden;
+
+        .spdp-header {
+            padding-bottom: 0;
+        }
+    }
+
+    &.spdp-is-dragging {
+        cursor: grabbing !important;
+        user-select: none;
+
+        * {
+            cursor: grabbing !important;
+        }
+    }
+}
+
+/* Internal parts */
+.scroll-progress-debug-palette {
+    &,
+    & *,
+    & *::before,
+    & *::after {
+        box-sizing: border-box;
+    }
+
+    [data-tracking='true'] {
+        .spdp-status-badge {
+            color: var(--sp-debug-palette-token-success);
+        }
+    }
+
+    [data-tracking='false'] {
+        .spdp-status-badge {
+            color: var(--sp-debug-palette-token-danger);
+        }
+    }
+
+    [data-completed='true'] {
+        .spdp-status-badge {
+            color: var(--sp-debug-palette-token-accent);
+        }
+    }
+
+    .spdp-control-group-label,
+    .spdp-details-readout-label,
+    .spdp-details-section-title,
+    .spdp-badge {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
+    .spdp-control-group-label,
+    .spdp-control-row-label-text,
+    .spdp-tracker-title,
+    .spdp-tracker-debug-id {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .spdp-details-readout-label,
+    .spdp-details-readout-meta,
+    .spdp-details-section-note {
+        color: var(--sp-debug-palette-token-text-muted);
+        font-size: 10px;
+    }
+
+    .spdp-details-readout-meta,
+    .spdp-details-section-note {
+        line-height: 1.35;
+    }
+
+    .spdp-control-group-header,
+    .spdp-button {
+        &:focus-visible {
+            outline: 2px solid var(--sp-debug-palette-token-accent);
+            outline-offset: 2px;
+        }
+    }
+
+    .spdp-header {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: grid;
+        gap: 8px;
+        margin-right: calc(var(--sp-debug-palette-token-padding) * -1);
+        margin-left: calc(var(--sp-debug-palette-token-padding) * -1);
+        padding: var(--sp-debug-palette-token-padding) var(--sp-debug-palette-token-padding) 12px;
+        background:
+            linear-gradient(
+                var(--sp-debug-palette-token-surface),
+                var(--sp-debug-palette-token-surface)
+            ),
+            var(--sp-debug-palette-token-surface);
+
+        .spdp-header-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .spdp-header-main {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+
+            .spdp-title {
+                color: var(--sp-debug-palette-token-title-color);
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .spdp-meta {
+                color: var(--sp-debug-palette-token-text-muted);
+                font-size: 10px;
+            }
+        }
+
+        .spdp-header-actions {
+            display: flex;
+            gap: 6px;
+        }
+    }
+
+    .spdp-control-groups {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        .spdp-control-group {
+            display: grid;
+            gap: 6px;
+        }
+
+        .spdp-control-group-panel {
+            padding: 6px;
+            border: 1px solid var(--sp-debug-palette-token-border-color);
+            border-radius: 9px;
+            background: var(--sp-debug-palette-token-item-bg);
+        }
+
+        .spdp-control-group-header {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            border: 0;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            line-height: 1;
+            text-align: left;
+            cursor: pointer;
+
+            .spdp-control-group-label {
+                min-width: 0;
+            }
+        }
+
+        .spdp-control-group-caret {
+            color: var(--sp-debug-palette-token-text-muted);
+            font-size: 10px;
+            line-height: 1;
+        }
+
+        .spdp-control-group-label {
+            color: var(--sp-debug-palette-token-text-muted);
+            font-size: 9px;
+        }
+
+        .spdp-control-group-summary {
+            color: var(--sp-debug-palette-token-text-muted);
+            font-size: 9px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .spdp-control-group-body {
+            display: grid;
+            gap: 6px;
+        }
+
+        .spdp-control-group-list {
+            display: grid;
+            gap: 4px;
+        }
+
+        .spdp-control-group-footer {
+            display: grid;
+            gap: 4px;
+            padding-top: 6px;
+            border-top: 1px solid var(--sp-debug-palette-token-border-color);
+        }
+
+        .spdp-control-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 28px;
+            padding: 4px 5px;
+            border: 1px solid var(--sp-debug-palette-token-border-color);
+            border-radius: 6px;
+            background: var(--sp-debug-palette-token-surface-muted);
+        }
+
+        .spdp-control-row-action {
+            grid-template-columns: minmax(0, 1fr);
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+
+        .spdp-control-row-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            color: var(--sp-debug-palette-token-text);
+            font-size: 11px;
+            line-height: 1.2;
+
+            .spdp-control-legend {
+                display: inline-flex;
+                flex-shrink: 0;
+                align-items: center;
+                gap: 3px;
+            }
+
+            .spdp-control-legend-swatch {
+                display: block;
+                width: 8px;
+                height: 8px;
+                border: 1px solid var(--sp-debug-palette-token-border-color-strong);
+                border-radius: 50%;
+                background: var(--sp-debug-palette-control-legend-color);
+            }
+
+            .spdp-control-row-label-text {
+                flex: 1;
+                min-width: 0;
+            }
+        }
+    }
+
+    .spdp-empty-state {
+        margin: 0;
+        padding: 10px;
+        border: 1px solid var(--sp-debug-palette-token-border-color);
+        border-radius: 9px;
+        background: var(--sp-debug-palette-token-item-bg);
+
+        .spdp-empty-message {
+            margin: 0;
+            color: var(--sp-debug-palette-token-text-muted);
+        }
+    }
+
+    .spdp-tracker-list {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        .spdp-tracker-list-item {
+            .spdp-tracker-card {
+                overflow: hidden;
+                border: 1px solid var(--sp-debug-palette-token-border-color);
+                border-radius: 8px;
+                background: var(--sp-debug-palette-token-item-bg);
+
+                &:hover {
+                    background: var(--sp-debug-palette-token-surface-raised);
+                }
+
+                .spdp-tracker-select {
+                    display: grid;
+                    width: 100%;
+                    min-width: 0;
+                    padding: 6px 8px;
+                    border: 0;
+                    background: transparent;
+                    color: inherit;
+                    font: inherit;
+                    text-align: left;
+                    cursor: pointer;
+
+                    &:focus-visible {
+                        outline: 2px solid var(--sp-debug-palette-token-accent);
+                        outline-offset: -2px;
+                    }
+
+                    .spdp-tracker-content {
+                        display: grid;
+                        gap: 3px;
+                        min-width: 0;
+
+                        .spdp-tracker-row {
+                            display: grid;
+                            grid-template-columns: minmax(0, 1fr) auto;
+                            align-items: baseline;
+                            gap: 8px;
+                            min-width: 0;
+                            white-space: nowrap;
+                        }
+
+                        .spdp-tracker-title,
+                        .spdp-tracker-debug-id {
+                            min-width: 0;
+                        }
+
+                        .spdp-tracker-title {
+                            color: var(--sp-debug-palette-token-item-title-color);
+                            font-size: 11px;
+                            font-weight: 700;
+                        }
+
+                        .spdp-tracker-debug-id {
+                            color: var(--sp-debug-palette-token-text-muted);
+                            font-size: 9px;
+                        }
+
+                        .spdp-tracker-badges,
+                        .spdp-tracker-metrics {
+                            display: flex;
+                            align-items: baseline;
+                            gap: 8px;
+                            min-width: 0;
+                            white-space: nowrap;
+                        }
+
+                        .spdp-tracker-metrics {
+                            color: var(--sp-debug-palette-token-text-muted);
+                            font-size: 9px;
+
+                            .spdp-metric-row {
+                                display: inline-flex;
+                                align-items: baseline;
+                                gap: 4px;
+                                min-width: 0;
+
+                                .spdp-metric-label {
+                                    white-space: nowrap;
+                                }
+
+                                .spdp-metric-value {
+                                    color: var(--sp-debug-palette-token-row-value-color);
+                                    font-weight: 700;
+                                    white-space: nowrap;
+                                }
+                            }
+                        }
+
+                        .spdp-inverted-badge {
+                            color: var(--sp-debug-palette-token-inverted);
+                            font-size: 9px;
+                            font-weight: 600;
+                            letter-spacing: 0.06em;
+                        }
+                    }
+
+                    &[aria-expanded='true'] {
+                        .spdp-tracker-metrics {
+                            display: none;
+                        }
+                    }
+                }
+
+                &[data-selected='true'] {
+                    border-color: var(--sp-debug-palette-token-selected-border-color);
+                    background: var(--sp-debug-palette-token-selected-bg);
+
+                    .spdp-tracker-title {
+                        color: var(--sp-debug-palette-token-accent);
+                    }
+                }
+            }
+        }
+    }
+
+    .spdp-details-panel {
+        position: relative;
+        margin: 0;
+        padding: 10px;
+        border: 0;
+        border-top: 1px solid var(--sp-debug-palette-token-border-color);
+        border-radius: 0;
+        background: var(--sp-debug-palette-token-details-bg);
+
+        .spdp-details-readouts {
+            display: grid;
+            gap: 8px;
+
+            .spdp-details-readout {
+                display: grid;
+                gap: 6px;
+                padding: 8px 0;
+
+                &:first-child {
+                    padding-top: 0;
+                }
+
+                .spdp-details-readout-head {
+                    display: flex;
+                    align-items: baseline;
+                    justify-content: space-between;
+                    gap: 10px;
+                }
+
+                .spdp-details-readout-value {
+                    color: var(--sp-debug-palette-token-row-value-color);
+                    font-size: 13px;
+                    font-weight: 800;
+                    line-height: 1;
+                    text-align: right;
+                }
+            }
+        }
+
+        .spdp-details-sections {
+            display: grid;
+            gap: 0;
+            margin-top: 10px;
+        }
+
+        .spdp-details-section {
+            display: grid;
+            gap: 7px;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid var(--sp-debug-palette-token-border-color);
+
+            &:first-child {
+                padding-top: 0;
+                margin-top: 0;
+                border-top: 0;
+            }
+
+            .spdp-details-section-title {
+                color: var(--sp-debug-palette-token-title-color);
+                font-size: 10px;
+            }
+
+            .spdp-details-section-grid {
+                display: grid;
+                gap: 4px;
+
+                .spdp-details-row {
+                    display: grid;
+                    grid-template-columns: minmax(128px, 1fr) minmax(0, 1fr);
+                    align-items: baseline;
+                    gap: 10px;
+                    min-width: 0;
+                    color: var(--sp-debug-palette-token-text-muted);
+
+                    .spdp-details-row-label,
+                    .spdp-details-row-value {
+                        min-width: 0;
+                        overflow: hidden;
+                    }
+
+                    .spdp-details-row-label {
+                        font-size: 10px;
+                    }
+
+                    .spdp-details-row-value {
+                        color: var(--sp-debug-palette-token-row-value-color);
+                        font-weight: 700;
+                        text-align: left;
+                    }
+                }
+            }
+
+            .spdp-details-section-note {
+                margin: 2px 0 0;
+            }
+        }
+
+        .spdp-value-bar {
+            height: 6px;
+            overflow: hidden;
+            border: 1px solid var(--sp-debug-palette-token-border-color-strong);
+            border-radius: 999px;
+            background: var(--sp-debug-palette-token-ratio-track-bg);
+
+            .spdp-value-bar-fill {
+                display: block;
+                height: 100%;
+                border-radius: inherit;
+            }
+
+            .spdp-progress-bar-fill {
+                background: var(--sp-debug-palette-token-accent);
+            }
+
+            .spdp-ratio-bar-fill {
+                background: var(--sp-debug-palette-token-ratio-fill-bg);
+            }
+        }
+    }
+
+    .spdp-badge {
+        flex-shrink: 0;
+        color: var(--sp-debug-palette-token-text-muted);
+        font-size: 10px;
+        text-align: right;
+    }
+
+    .spdp-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 26px;
+        border: 1px solid var(--sp-debug-palette-token-border-color);
+        border-radius: 5px;
+        padding: 5px 7px;
+        background: var(--sp-debug-palette-token-button-bg);
+        color: inherit;
+        font: inherit;
+        line-height: 1.1;
+        text-align: center;
+        cursor: pointer;
+
+        &.spdp-control-switch {
+            min-width: 42px;
+            min-height: 22px;
+            padding: 3px 7px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        &.spdp-control-button {
+            width: 100%;
+            min-height: 24px;
+            white-space: nowrap;
+        }
+
+        &[aria-pressed='true'] {
+            border-color: var(--sp-debug-palette-token-accent);
+        }
+
+        &[aria-pressed='false'] {
+            color: var(--sp-debug-palette-token-text-muted);
+        }
+
+        &:hover {
+            border-color: var(--sp-debug-palette-token-border-color-strong);
+            background: var(--sp-debug-palette-token-button-hover-bg);
+            color: var(--sp-debug-palette-token-text);
+        }
+
+        &:disabled {
+            border-color: var(--sp-debug-palette-token-border-color);
+            background: var(--sp-debug-palette-token-surface-muted);
+            color: var(--sp-debug-palette-token-text-muted);
+            cursor: not-allowed;
+            opacity: 0.62;
+
+            &:hover {
+                border-color: var(--sp-debug-palette-token-border-color);
+                background: var(--sp-debug-palette-token-surface-muted);
+                color: var(--sp-debug-palette-token-text-muted);
+            }
+        }
+
+        &[data-scroll-progress-debug-action='drag'] {
+            cursor: grab;
+        }
+
+        &.spdp-icon-button {
+            display: inline-grid;
+            flex-shrink: 0;
+            place-items: center;
+            align-self: center;
+            justify-self: center;
+            width: 26px;
+            height: 26px;
+            min-height: 26px;
+            padding: 0;
+            margin-left: 2px;
+        }
+
+        &.spdp-button-with-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .spdp-button-label {
+            line-height: 1;
+        }
+
+        .spdp-icon {
+            display: block;
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+    }
+}
+
+@media (max-width: 1279px) {
+    .scroll-progress-debug-palette {
+        left: 50% !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: max(
+            var(--sp-debug-palette-token-viewport-spacing),
+            env(safe-area-inset-bottom, 0px)
+        ) !important;
+        width: calc(100vw - (var(--sp-debug-palette-token-viewport-spacing) * 2));
+        max-width: 640px;
+        max-height: min(
+            calc(
+                var(--sp-debug-palette-token-max-height) -
+                    (var(--sp-debug-palette-token-viewport-spacing) * 2)
+            ),
+            55vh
+        );
+        max-height: min(
+            calc(
+                var(--sp-debug-palette-token-max-height) -
+                    (var(--sp-debug-palette-token-viewport-spacing) * 2)
+            ),
+            55dvh
+        );
+        transform: translateX(-50%);
+
+        &.spdp-is-collapsed {
+            width: calc(100vw - (var(--sp-debug-palette-token-viewport-spacing) * 2));
+            min-width: 0;
+            max-width: 640px;
+        }
+
+        .spdp-button.spdp-drag-handle {
+            display: none;
+        }
+    }
+}

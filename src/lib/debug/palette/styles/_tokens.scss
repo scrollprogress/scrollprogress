@@ -1,0 +1,40 @@
+.scroll-progress-debug-palette {
+    --sp-debug-palette-token-viewport-spacing: var(--sp-debug-palette-viewport-spacing);
+    --sp-debug-palette-token-z-index: var(--sp-debug-palette-z-index);
+    --sp-debug-palette-token-width: var(--sp-debug-palette-width);
+    --sp-debug-palette-token-max-height: var(--sp-debug-palette-max-height);
+    --sp-debug-palette-token-padding: var(--sp-debug-palette-padding);
+    --sp-debug-palette-token-radius: var(--sp-debug-palette-radius);
+
+    --sp-debug-palette-token-surface: var(--sp-debug-palette-bg);
+    --sp-debug-palette-token-surface-muted: var(--sp-debug-palette-surface-muted);
+    --sp-debug-palette-token-surface-raised: var(--sp-debug-palette-surface-raised);
+    --sp-debug-palette-token-item-bg: var(--sp-debug-palette-item-bg);
+    --sp-debug-palette-token-selected-bg: var(--sp-debug-palette-selected-bg);
+    --sp-debug-palette-token-details-bg: var(--sp-debug-palette-details-bg);
+    --sp-debug-palette-token-ratio-track-bg: var(--sp-debug-palette-ratio-track-bg);
+    --sp-debug-palette-token-ratio-fill-bg: var(--sp-debug-palette-ratio-fill-bg);
+
+    --sp-debug-palette-token-border-color: var(--sp-debug-palette-border-color);
+    --sp-debug-palette-token-border-color-strong: var(--sp-debug-palette-border-color-strong);
+    --sp-debug-palette-token-border: var(--sp-debug-palette-border);
+    --sp-debug-palette-token-selected-border-color: var(--sp-debug-palette-selected-border-color);
+
+    --sp-debug-palette-token-text: var(--sp-debug-palette-color);
+    --sp-debug-palette-token-text-muted: var(--sp-debug-palette-text-muted);
+    --sp-debug-palette-token-title-color: var(--sp-debug-palette-title-color);
+    --sp-debug-palette-token-row-value-color: var(--sp-debug-palette-row-value-color);
+    --sp-debug-palette-token-item-title-color: var(--sp-debug-palette-item-title-color);
+
+    --sp-debug-palette-token-accent: var(--sp-debug-palette-accent);
+    --sp-debug-palette-token-success: var(--sp-debug-palette-success);
+    --sp-debug-palette-token-danger: var(--sp-debug-palette-danger);
+    --sp-debug-palette-token-inverted: var(--sp-debug-palette-inverted);
+
+    --sp-debug-palette-token-shadow: var(--sp-debug-palette-shadow);
+    --sp-debug-palette-token-font-family: var(--sp-debug-palette-font-family);
+    --sp-debug-palette-token-font-size: var(--sp-debug-palette-font-size);
+
+    --sp-debug-palette-token-button-bg: var(--sp-debug-palette-button-bg);
+    --sp-debug-palette-token-button-hover-bg: var(--sp-debug-palette-button-hover-bg);
+}

@@ -1,0 +1,18 @@
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    scrollbar-color: #5eead4 #222;
+    scrollbar-gutter: stable;
+}
+
+.milestone-step {
+    opacity: 0.32;
+    transform: translateY(12px);
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+.milestone-step[data-unlocked='true'] {
+    opacity: 1;
+    transform: translateY(0);
+}

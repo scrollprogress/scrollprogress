@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@scrollprogress/scrollprogress": ["./src/lib/index.ts"],
+      "@scrollprogress/scrollprogress/debug": ["./src/lib/debug/index.ts"],
+      "@scrollprogress/scrollprogress/debug/registry": ["./src/lib/debug/registry/index.ts"],
+      "@scrollprogress/scrollprogress/debug/console": ["./src/lib/debug/console/index.ts"],
+      "@scrollprogress/scrollprogress/debug/overlay": ["./src/lib/debug/overlay/index.ts"],
+      "@scrollprogress/scrollprogress/debug/palette": ["./src/lib/debug/palette/index.ts"]
+    }
+  },
+  "include": ["playground/**/*.ts"]
+}

@@ -1,0 +1,70 @@
+<div class="fixed inset-x-0 top-0 z-30 h-1 w-full overflow-hidden bg-white/15">
+  <div
+    data-scroll-progress-bar="viewport-x"
+    class="relative h-full w-full origin-left bg-purple-500"
+  ></div>
+</div>
+<div
+  class="fixed bottom-4 left-4 z-20 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-neutral-950/85 p-4 text-sm text-neutral-300 backdrop-blur sm:bottom-6 sm:left-6 sm:max-w-sm"
+>
+  <p class="font-medium text-neutral-100">Viewport X</p>
+  <p class="mt-2">
+    <strong class="text-neutral-100">Check:</strong> document-level horizontal progress.
+  </p>
+  <p class="mt-2">
+    <strong class="text-neutral-100">Try:</strong> scroll horizontally. Trackpad/touch: swipe ·
+    Mouse: Shift + wheel or drag the scrollbar · Keyboard: use ← / →. This tests
+    <code class="text-neutral-100">root: null</code> with
+    <code class="text-neutral-100">axis: 'x'</code>.
+  </p>
+  <p class="mt-2 font-mono text-xs text-neutral-500">
+    Tracking: <span data-scroll-tracking="viewport-x">idle</span>
+  </p>
+  <p class="mt-2">
+    <strong class="text-neutral-100">Expect:</strong> the top bar and live state update in both
+    directions.
+  </p>
+  <div class="demo-action-row mt-3" data-demo-actions="edge/viewport-x"></div>
+  <nav aria-label="Project resources" class="mt-3 flex flex-wrap gap-x-2 text-xs text-neutral-500">
+    <a href="https://scrollprogress.com">Public site</a><span>·</span>
+    <a href="https://scrollprogress.com/docs">Docs</a><span>·</span>
+    <a href="./index.html">Playground</a><span>·</span>
+    <a href="https://github.com/scrollprogress/scrollprogress">GitHub</a><span>·</span>
+    <a href="mailto:team@scrollprogress.com">Email</a>
+  </nav>
+</div>
+<main class="viewport-x-page px-6 pb-24 pt-36">
+  <section class="sticky left-6 top-32 w-fit max-w-xl">
+    <p class="text-sm font-medium uppercase tracking-[0.24em] text-purple-300">
+      Dedicated horizontal document
+    </p>
+    <h1 class="mt-4 text-5xl font-semibold tracking-tight">Viewport progress on the X axis</h1>
+    <p class="mt-4 max-w-md leading-7 text-neutral-400">
+      This page intentionally creates document-level horizontal overflow. The nested horizontal root
+      example remains in the Core examples page.
+    </p>
+  </section>
+
+  <section
+    data-scroll-demo="viewport-x"
+    class="absolute left-[120vw] top-1/2 h-80 w-[80vw] max-w-xl -translate-y-1/2 rounded-3xl border border-white/10 bg-white/3 p-8 transition-colors data-[scroll-active=true]:border-purple-400/60 data-[scroll-active=true]:bg-purple-400/5"
+  >
+    <p class="text-sm font-medium uppercase tracking-[0.24em] text-purple-300">Horizontal target</p>
+    <h2 class="mt-4 text-3xl font-medium">Live state</h2>
+    <output class="mt-8 block font-mono text-6xl">0.000</output>
+    <dl class="mt-6 grid gap-3 font-mono text-sm text-neutral-400">
+      <div class="flex justify-between gap-6">
+        <dt>Progress direction</dt>
+        <dd data-scroll-progress-direction="viewport-x">none</dd>
+      </div>
+      <div class="flex justify-between gap-6">
+        <dt>Scroll direction</dt>
+        <dd data-scroll-direction="viewport-x">none</dd>
+      </div>
+      <div class="flex justify-between gap-6">
+        <dt>Intersection ratio</dt>
+        <dd data-scroll-intersection-ratio="viewport-x">0.000</dd>
+      </div>
+    </dl>
+  </section>
+</main>

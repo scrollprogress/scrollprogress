@@ -1,0 +1,11 @@
+# Dependencies, generated output and local evidence
+node_modules/
+dist/
+dist-ssr/
+playground/dist/
+test-results/
+coverage/
+_reference/
+
+# npm owns the lockfile's formatting.
+package-lock.json

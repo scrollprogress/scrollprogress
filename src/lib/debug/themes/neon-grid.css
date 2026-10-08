@@ -1,0 +1,41 @@
+/* Optional ScrollProgress debug theme. Import it, then pass theme: 'neon-grid'. */
+.scroll-progress-debug-palette[data-scroll-progress-debug-theme='neon-grid'] {
+    --sp-debug-palette-radius: 10px;
+
+    --sp-debug-palette-bg: rgba(2, 6, 23, 0.96);
+    --sp-debug-palette-surface-muted: rgba(8, 47, 73, 0.62);
+    --sp-debug-palette-surface-raised: rgba(30, 41, 59, 0.96);
+    --sp-debug-palette-item-bg: rgba(15, 23, 42, 0.72);
+    --sp-debug-palette-selected-bg: rgba(88, 28, 135, 0.38);
+    --sp-debug-palette-details-bg: rgba(15, 23, 42, 0.92);
+    --sp-debug-palette-ratio-track-bg: rgba(34, 211, 238, 0.18);
+    --sp-debug-palette-ratio-fill-bg: #c084fc;
+
+    --sp-debug-palette-border-color: rgba(34, 211, 238, 0.3);
+    --sp-debug-palette-border-color-strong: rgba(34, 211, 238, 0.62);
+
+    --sp-debug-palette-color: #cffafe;
+    --sp-debug-palette-text-muted: rgba(165, 243, 252, 0.68);
+    --sp-debug-palette-title-color: #ecfeff;
+    --sp-debug-palette-row-value-color: #f5f3ff;
+    --sp-debug-palette-item-title-color: #ffffff;
+
+    --sp-debug-palette-accent: #22d3ee;
+    --sp-debug-palette-success: #4ade80;
+    --sp-debug-palette-danger: #fb7185;
+    --sp-debug-palette-inverted: #c084fc;
+
+    --sp-debug-palette-shadow: 0 20px 60px rgba(34, 211, 238, 0.16);
+}
+
+.scroll-progress-debug-overlay[data-scroll-progress-debug-theme='neon-grid'] {
+    --sp-debug-overlay-target-color: #22d3ee;
+    --sp-debug-overlay-progress-start-color: #4ade80;
+    --sp-debug-overlay-progress-end-color: #fb7185;
+    --sp-debug-overlay-root-color: #60a5fa;
+    --sp-debug-overlay-margin-color: #c084fc;
+    --sp-debug-overlay-intersection-color: #f472b6;
+    --sp-debug-overlay-label-text: #020617;
+    --sp-debug-overlay-line-width: 1px;
+    --sp-debug-overlay-label-radius: 4px;
+}

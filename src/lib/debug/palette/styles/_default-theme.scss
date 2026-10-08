@@ -1,0 +1,47 @@
+.scroll-progress-debug-palette {
+    --sp-debug-palette-viewport-spacing: 16px;
+    --sp-debug-palette-z-index: 999999;
+    --sp-debug-palette-width: 320px;
+    --sp-debug-palette-max-height: 100vh;
+    --sp-debug-palette-padding: 12px;
+    --sp-debug-palette-radius: 12px;
+
+    --sp-debug-palette-bg: rgba(15, 23, 42, 0.94);
+    --sp-debug-palette-surface-muted: rgba(15, 23, 42, 0.5);
+    --sp-debug-palette-surface-raised: rgba(30, 41, 59, 0.85);
+    --sp-debug-palette-item-bg: rgba(15, 23, 42, 0.35);
+    --sp-debug-palette-selected-bg: rgba(30, 41, 59, 0.6);
+    --sp-debug-palette-details-bg: rgba(30, 41, 59, 0.42);
+    --sp-debug-palette-ratio-track-bg: rgba(255, 255, 255, 0.12);
+    --sp-debug-palette-ratio-fill-bg: rgba(255, 255, 255, 0.82);
+
+    --sp-debug-palette-border-color: rgba(148, 163, 184, 0.24);
+    --sp-debug-palette-border-color-strong: rgba(226, 232, 240, 0.32);
+    --sp-debug-palette-border: 1px solid var(--sp-debug-palette-border-color);
+    --sp-debug-palette-selected-border-color: var(--sp-debug-palette-border-color-strong);
+
+    --sp-debug-palette-color: rgb(226, 232, 240);
+    --sp-debug-palette-text-muted: rgba(226, 232, 240, 0.66);
+    --sp-debug-palette-title-color: #fff;
+    --sp-debug-palette-row-value-color: #fff;
+    --sp-debug-palette-item-title-color: #fff;
+
+    --sp-debug-palette-accent: rgb(250, 204, 21);
+    --sp-debug-palette-success: rgb(74, 222, 128);
+    --sp-debug-palette-danger: rgb(248, 113, 113);
+    --sp-debug-palette-inverted: rgb(196, 181, 253);
+
+    --sp-debug-palette-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --sp-debug-palette-font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sp-debug-palette-font-size: 12px;
+
+    --sp-debug-palette-button-bg: var(--sp-debug-palette-surface-muted);
+    --sp-debug-palette-button-hover-bg: var(--sp-debug-palette-surface-raised);
+}
+
+@media (max-width: 1279px) {
+    .scroll-progress-debug-palette {
+        --sp-debug-palette-viewport-spacing: 8px;
+    }
+}

@@ -1,0 +1,16 @@
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    scrollbar-color: #5eead4 #222;
+    scrollbar-gutter: stable;
+}
+
+.direction-toolbar {
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+[data-experiment-target='direction'][data-toolbar-visible='false'] .direction-toolbar {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-20px);
+}

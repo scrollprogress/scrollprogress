@@ -1,0 +1,41 @@
+/* Optional ScrollProgress debug theme. Import it, then pass theme: 'paper'. */
+.scroll-progress-debug-palette[data-scroll-progress-debug-theme='paper'] {
+    --sp-debug-palette-radius: 8px;
+
+    --sp-debug-palette-bg: rgba(250, 250, 249, 0.98);
+    --sp-debug-palette-surface-muted: rgba(231, 229, 228, 0.82);
+    --sp-debug-palette-surface-raised: #ffffff;
+    --sp-debug-palette-item-bg: #ffffff;
+    --sp-debug-palette-selected-bg: #eff6ff;
+    --sp-debug-palette-details-bg: rgba(245, 245, 244, 0.96);
+    --sp-debug-palette-ratio-track-bg: #d6d3d1;
+    --sp-debug-palette-ratio-fill-bg: #2563eb;
+
+    --sp-debug-palette-border-color: rgba(120, 113, 108, 0.3);
+    --sp-debug-palette-border-color-strong: rgba(87, 83, 78, 0.58);
+
+    --sp-debug-palette-color: #292524;
+    --sp-debug-palette-text-muted: #78716c;
+    --sp-debug-palette-title-color: #1c1917;
+    --sp-debug-palette-row-value-color: #1c1917;
+    --sp-debug-palette-item-title-color: #1c1917;
+
+    --sp-debug-palette-accent: #2563eb;
+    --sp-debug-palette-success: #15803d;
+    --sp-debug-palette-danger: #dc2626;
+    --sp-debug-palette-inverted: #7c3aed;
+
+    --sp-debug-palette-shadow: 0 20px 60px rgba(41, 37, 36, 0.2);
+}
+
+.scroll-progress-debug-overlay[data-scroll-progress-debug-theme='paper'] {
+    --sp-debug-overlay-target-color: #ca8a04;
+    --sp-debug-overlay-progress-start-color: #15803d;
+    --sp-debug-overlay-progress-end-color: #dc2626;
+    --sp-debug-overlay-root-color: #2563eb;
+    --sp-debug-overlay-margin-color: #7c3aed;
+    --sp-debug-overlay-intersection-color: #db2777;
+    --sp-debug-overlay-label-text: #ffffff;
+    --sp-debug-overlay-line-width: 1px;
+    --sp-debug-overlay-label-radius: 4px;
+}

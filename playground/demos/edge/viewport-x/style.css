@@ -1,0 +1,5 @@
+.viewport-x-page {
+    position: relative;
+    width: 300vw;
+    min-height: 100vh;
+}

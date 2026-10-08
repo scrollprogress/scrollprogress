@@ -1,0 +1,26 @@
+{
+  "posts": [
+    {
+      "id": 101,
+      "category": "Interface design",
+      "title": "A practical hierarchy for long product pages",
+      "excerpt": "Clear sections and honest progress cues help readers understand where they are without interrupting the story.",
+      "readTime": "5 min read"
+    },
+    {
+      "id": 102,
+      "category": "Frontend architecture",
+      "title": "Keep geometry separate from application state",
+      "excerpt": "Scroll can signal when work should begin, while request ownership, errors and persistence remain explicit application concerns.",
+      "readTime": "7 min read"
+    },
+    {
+      "id": 103,
+      "category": "Accessibility",
+      "title": "Append content without stealing the reader’s focus",
+      "excerpt": "New results can be announced politely while keyboard position and the existing reading flow remain undisturbed.",
+      "readTime": "4 min read"
+    }
+  ],
+  "next": "./data/posts-page-2.json"
+}

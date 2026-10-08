@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" class="playground-shell">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Exercise the optional ScrollProgress registry, console, palette and overlay tools."
+    />
+    <title>Debug lab · ScrollProgress playground</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="flex min-h-screen flex-col bg-neutral-950 text-neutral-100 antialiased">
+    <header class="border-b border-white/10 bg-neutral-950/90 backdrop-blur">
+      <nav
+        aria-label="Playground"
+        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"
+      >
+        <a href="./index.html" class="text-sm font-semibold tracking-wide text-white"
+          >ScrollProgress</a
+        >
+        <div class="playground-nav-links text-sm lg:w-auto lg:justify-end">
+          <a href="./index.html" class="playground-nav-link">Home</a>
+          <a href="./core.html" class="playground-nav-link">Core</a>
+          <a href="./experiments.html" class="playground-nav-link">Experiments</a>
+          <a href="./debug.html" aria-current="page" class="playground-nav-link">Debug</a>
+          <a href="./viewport-x.html" class="playground-nav-link">Viewport X</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl flex-1 px-6 py-16">
+      <!-- playground-demo:debug/lab -->
+    </main>
+
+    <footer class="playground-resources">
+      <nav aria-label="Project resources">
+        <a href="https://scrollprogress.com">Public site</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://scrollprogress.com/docs">Docs</a>
+        <span aria-hidden="true">·</span>
+        <a href="./index.html">Playground</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/scrollprogress/scrollprogress">GitHub</a>
+        <span aria-hidden="true">·</span>
+        <a href="mailto:team@scrollprogress.com">Email</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="./debug.ts"></script>
+  </body>
+</html>

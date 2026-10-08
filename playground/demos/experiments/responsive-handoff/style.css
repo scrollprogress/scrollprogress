@@ -1,0 +1,5 @@
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    scrollbar-color: #5eead4 #222;
+    scrollbar-gutter: stable;
+}

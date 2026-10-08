@@ -1,0 +1,50 @@
+<div class="min-w-0 rounded-3xl border border-white/10 bg-white/3 p-6">
+  <p class="text-base font-semibold text-pink-300">
+    Horizontal scroll container · <code>root</code> + <code>axis: 'x'</code>
+  </p>
+  <h3 class="mt-3 text-3xl font-semibold">Reuse the same range on the x axis</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> use <code>axis: 'x'</code> inside a
+      horizontal scroll container (<code>root</code>).
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> scroll horizontally. Trackpad/touch: swipe ·
+      Mouse: Shift + wheel or drag the scrollbar · Keyboard: focus the panel and use ← / →.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> progress and direction follow the panel
+      without widening the page.
+    </p>
+  </div>
+  <div
+    data-core-root="horizontal"
+    data-scroll-region
+    tabindex="0"
+    role="region"
+    aria-label="Horizontal custom root"
+    class="mt-5 flex h-80 overflow-x-auto rounded-2xl border border-white/10 bg-black/25 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300/60"
+  >
+    <div class="grid h-full min-w-[75%] shrink-0 place-items-center text-sm text-neutral-500">
+      Scroll horizontally →
+    </div>
+    <div
+      data-core-target="custom-horizontal"
+      class="h-full w-80 shrink-0 rounded-2xl border border-white/10 bg-pink-300/5 p-6 transition data-[scroll-active=true]:border-pink-300/60"
+    >
+      <h3 class="text-2xl font-semibold">Measured element (<code>target</code>)</h3>
+      <output data-demo-progress="custom-horizontal" class="mt-8 block font-mono text-5xl"
+        >0.000</output
+      >
+      <p class="mt-5 text-sm text-neutral-400">
+        Tracking: <span data-demo-tracking="custom-horizontal">idle</span>
+      </p>
+      <p class="mt-2 text-sm text-neutral-400">
+        Direction: <span data-demo-direction="custom-horizontal">none</span>
+      </p>
+    </div>
+    <div class="grid h-full min-w-[75%] shrink-0 place-items-center text-sm text-neutral-500">
+      End of nested content
+    </div>
+  </div>
+</div>

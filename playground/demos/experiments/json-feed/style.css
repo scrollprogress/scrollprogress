@@ -1,0 +1,15 @@
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    scrollbar-color: #5eead4 #222;
+    scrollbar-gutter: stable;
+}
+
+@keyframes feed-item-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+.generated-feed-item {
+    animation: feed-item-enter 240ms ease-out both;
+}

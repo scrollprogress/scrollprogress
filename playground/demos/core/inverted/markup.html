@@ -1,0 +1,35 @@
+<div
+  data-core-target="inverted"
+  class="min-h-80 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-amber-300/50"
+>
+  <p class="text-base font-semibold text-amber-300">Inverted progress · <code>inverted</code></p>
+  <h3 class="mt-3 text-3xl font-semibold">Reverse the exposed value, not the scroll</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> expose
+      <code>1 - geometric progress</code> with <code>inverted</code>.
+    </p>
+    <p><strong class="text-neutral-200">Try:</strong> scroll past this card.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> geometric progress rises while exposed
+      progress falls; scroll direction does not change.
+    </p>
+  </div>
+  <div class="mt-10 grid gap-4 sm:grid-cols-2">
+    <div class="rounded-2xl border border-white/10 bg-black/20 p-5">
+      <p class="text-xs uppercase tracking-[0.18em] text-neutral-500">Geometric progress</p>
+      <output data-inverted-geometric class="mt-3 block font-mono text-4xl">0.000</output>
+    </div>
+    <div class="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5">
+      <p class="text-xs uppercase tracking-[0.18em] text-amber-300">Exposed progress</p>
+      <output data-demo-progress="inverted" class="mt-3 block font-mono text-4xl">1.000</output>
+    </div>
+  </div>
+  <p class="mt-4 font-mono text-xs text-neutral-500">exposed = 1 − geometric</p>
+  <p class="mt-5 text-sm text-neutral-400">
+    Tracking: <span data-demo-tracking="inverted">idle</span>
+  </p>
+  <p class="mt-2 text-sm text-neutral-400">
+    Direction: <span data-demo-direction="inverted">none</span>
+  </p>
+</div>

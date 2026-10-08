@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" class="playground-shell">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Technical ScrollProgress experiments with explicit state and cleanup."
+    />
+    <title>Experiments · ScrollProgress playground</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
+    <header class="border-b border-white/10 bg-neutral-950/90 backdrop-blur">
+      <nav
+        aria-label="Playground"
+        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"
+      >
+        <a href="./index.html" class="text-sm font-semibold tracking-wide text-white"
+          >ScrollProgress</a
+        >
+        <div class="playground-nav-links text-sm lg:w-auto lg:justify-end">
+          <a href="./index.html" class="playground-nav-link">Home</a>
+          <a href="./core.html" class="playground-nav-link">Core</a>
+          <a href="./experiments.html" aria-current="page" class="playground-nav-link"
+            >Experiments</a
+          >
+          <a href="./debug.html" class="playground-nav-link">Debug</a>
+          <a href="./viewport-x.html" class="playground-nav-link">Viewport X</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-6 py-16">
+      <section class="max-w-3xl py-16">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-teal-300">Experiments</p>
+        <h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-6xl">
+          Application scenarios, one check at a time.
+        </h1>
+        <p class="mt-6 text-lg leading-8 text-neutral-400">
+          Follow <strong class="font-medium text-neutral-200">Try</strong>, compare the result with
+          <strong class="font-medium text-neutral-200">Expect</strong>, then open
+          <strong class="font-medium text-neutral-200">Demo code</strong> to inspect or download the
+          complete example.
+        </p>
+        <nav aria-label="Experiment list" class="mt-8 flex flex-wrap gap-2 text-sm">
+          <a
+            href="#predictive-preload"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+            >Predictive preload</a
+          ><a
+            href="#milestones"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+            >Milestones</a
+          ><a
+            href="#responsive-handoff"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+            >Responsive handoff</a
+          ><a
+            href="#direction-toolbar"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+            >Direction UI</a
+          ><a
+            href="#infinite-feed"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+            >JSON feed</a
+          >
+        </nav>
+      </section>
+
+      <section class="space-y-32 pb-32" aria-label="ScrollProgress experiments">
+        <article id="predictive-preload" class="scroll-mt-8">
+          <!-- playground-demo:experiments/predictive-preload -->
+          <div
+            class="demo-action-row mt-5"
+            data-demo-actions="experiments/predictive-preload"
+          ></div>
+        </article>
+
+        <article id="milestones" class="scroll-mt-8">
+          <!-- playground-demo:experiments/milestones -->
+          <div class="demo-action-row mt-5" data-demo-actions="experiments/milestones"></div>
+        </article>
+
+        <article id="responsive-handoff" class="scroll-mt-8">
+          <!-- playground-demo:experiments/responsive-handoff -->
+          <div
+            class="demo-action-row mt-5"
+            data-demo-actions="experiments/responsive-handoff"
+          ></div>
+        </article>
+
+        <article id="direction-toolbar" class="scroll-mt-8">
+          <!-- playground-demo:experiments/direction-toolbar -->
+          <div class="demo-action-row mt-5" data-demo-actions="experiments/direction-toolbar"></div>
+        </article>
+
+        <article id="infinite-feed" class="scroll-mt-8">
+          <!-- playground-demo:experiments/json-feed -->
+          <div class="demo-action-row mt-5" data-demo-actions="experiments/json-feed"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="playground-resources">
+      <nav aria-label="Project resources">
+        <a href="https://scrollprogress.com">Public site</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://scrollprogress.com/docs">Docs</a>
+        <span aria-hidden="true">·</span>
+        <a href="./index.html">Playground</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/scrollprogress/scrollprogress">GitHub</a>
+        <span aria-hidden="true">·</span>
+        <a href="mailto:team@scrollprogress.com">Email</a>
+      </nav>
+    </footer>
+    <script type="module" src="./experiments.ts"></script>
+  </body>
+</html>

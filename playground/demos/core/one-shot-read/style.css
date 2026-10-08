@@ -1,0 +1,30 @@
+.one-shot-read-demo {
+    display: grid;
+    gap: 1rem;
+    min-height: 120vh;
+}
+
+.one-shot-read-demo button {
+    width: fit-content;
+    padding: 0.65rem 1rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.one-shot-read-demo output {
+    font:
+        700 1.5rem/1 ui-monospace,
+        monospace;
+}
+
+[data-core-target='one-shot-read'] {
+    display: grid;
+    min-height: 16rem;
+    place-items: center;
+    border: 1px solid rgb(255 255 255 / 25%);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 6%);
+}

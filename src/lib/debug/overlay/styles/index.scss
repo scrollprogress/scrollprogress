@@ -1,0 +1,425 @@
+@use './default-theme';
+@use './tokens';
+
+/* Shell */
+.scroll-progress-debug-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--sp-debug-overlay-token-z-index);
+    pointer-events: none;
+
+    &,
+    & *,
+    & *::before,
+    & *::after {
+        box-sizing: border-box;
+    }
+
+    .spdo-root {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+
+        .spdo-layer {
+            --spdo-layer-color: currentColor;
+            --spdo-label-bg: var(--spdo-layer-color);
+            --spdo-label-text: var(--sp-debug-overlay-token-label-text);
+
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+            border: var(--sp-debug-overlay-token-line-width) dashed var(--spdo-layer-color);
+            background: transparent;
+            color: var(--spdo-layer-color);
+
+            &[data-visible='true'] {
+                &[data-has-geometry='true'] {
+                    opacity: 1;
+                }
+            }
+
+            &.spdo-layer-target {
+                --spdo-layer-color: var(--sp-debug-overlay-token-target-color);
+                --spdo-label-text: var(--sp-debug-overlay-token-target-label-text);
+            }
+
+            &.spdo-layer-progress {
+                border: 0;
+            }
+
+            &.spdo-layer-root {
+                --spdo-layer-color: var(--sp-debug-overlay-token-root-color);
+                --spdo-label-text: var(--sp-debug-overlay-token-root-label-text);
+            }
+
+            &.spdo-layer-margin {
+                --spdo-layer-color: var(--sp-debug-overlay-token-margin-color);
+                --spdo-label-text: var(--sp-debug-overlay-token-margin-label-text);
+
+                &[data-root-type='viewport'] {
+                    .spdo-layer-label-margin {
+                        &.spdo-label-internal {
+                            &[data-horizontal-fallback='left'] {
+                                left: calc(
+                                    max(0px, var(--spdo-margin-offset-left)) +
+                                        var(--sp-debug-overlay-token-label-offset)
+                                );
+                            }
+                            &.spdo-label-top {
+                                top: calc(
+                                    max(0px, var(--spdo-margin-offset-top)) +
+                                        var(--sp-debug-overlay-token-label-offset)
+                                );
+                            }
+
+                            &.spdo-label-bottom {
+                                bottom: calc(
+                                    max(0px, var(--spdo-margin-offset-bottom)) +
+                                        var(--sp-debug-overlay-token-label-offset)
+                                );
+                            }
+
+                            &.spdo-label-left {
+                                left: calc(
+                                    max(0px, var(--spdo-margin-offset-left)) +
+                                        var(--sp-debug-overlay-token-label-offset)
+                                );
+                            }
+
+                            &.spdo-label-right {
+                                right: calc(
+                                    max(0px, var(--spdo-margin-offset-right)) +
+                                        var(--sp-debug-overlay-token-label-offset)
+                                );
+                            }
+                        }
+                    }
+                }
+
+                .spdo-margin-guide {
+                    position: absolute;
+                    display: none;
+
+                    &[data-state='offscreen'],
+                    &[data-state='inside'] {
+                        display: block;
+                    }
+
+                    &-label {
+                        width: max-content;
+                        max-width: calc(100vw - 16px);
+                        justify-content: center;
+                        text-align: center;
+                        white-space: normal;
+                    }
+
+                    &-top,
+                    &-bottom {
+                        right: var(--spdo-margin-offset-right);
+                        left: var(--spdo-margin-offset-left);
+                        height: var(--sp-debug-overlay-token-line-width);
+
+                        &[data-anchor='margin'] {
+                            right: 0;
+                            left: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            left: 50%;
+                            transform: translateX(-50%);
+                        }
+                    }
+
+                    &-top {
+                        top: var(--spdo-margin-offset-top);
+
+                        &[data-anchor='margin'] {
+                            top: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            --spdo-label-top-left-radius: 0;
+                            --spdo-label-top-right-radius: 0;
+
+                            top: 0;
+                        }
+                    }
+
+                    &-bottom {
+                        bottom: var(--spdo-margin-offset-bottom);
+
+                        &[data-anchor='margin'] {
+                            bottom: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            --spdo-label-bottom-right-radius: 0;
+                            --spdo-label-bottom-left-radius: 0;
+
+                            bottom: 0;
+                        }
+                    }
+
+                    &-right,
+                    &-left {
+                        top: var(--spdo-margin-offset-top);
+                        bottom: var(--spdo-margin-offset-bottom);
+                        width: var(--sp-debug-overlay-token-line-width);
+
+                        &[data-anchor='margin'] {
+                            top: 0;
+                            bottom: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            top: 50%;
+                            transform: translateY(-50%);
+                        }
+                    }
+
+                    &-right {
+                        right: var(--spdo-margin-offset-right);
+
+                        &[data-anchor='margin'] {
+                            right: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            --spdo-label-top-right-radius: 0;
+                            --spdo-label-bottom-right-radius: 0;
+
+                            right: 0;
+                        }
+                    }
+
+                    &-left {
+                        left: var(--spdo-margin-offset-left);
+
+                        &[data-anchor='margin'] {
+                            left: 0;
+                        }
+
+                        .spdo-margin-guide-label {
+                            --spdo-label-top-left-radius: 0;
+                            --spdo-label-bottom-left-radius: 0;
+
+                            left: 0;
+                        }
+                    }
+                }
+            }
+
+            &.spdo-layer-intersection {
+                --spdo-layer-color: var(--sp-debug-overlay-token-intersection-color);
+                --spdo-label-text: var(--sp-debug-overlay-token-intersection-label-text);
+
+                border-style: solid;
+                background: repeating-linear-gradient(
+                    45deg,
+                    color-mix(in srgb, var(--spdo-layer-color), transparent 88%) 0,
+                    color-mix(in srgb, var(--spdo-layer-color), transparent 88%) 2px,
+                    transparent 2px,
+                    transparent 6px
+                );
+            }
+
+            .spdo-label {
+                --spdo-label-top-left-radius: var(--sp-debug-overlay-token-label-radius);
+                --spdo-label-top-right-radius: var(--sp-debug-overlay-token-label-radius);
+                --spdo-label-bottom-right-radius: var(--sp-debug-overlay-token-label-radius);
+                --spdo-label-bottom-left-radius: var(--sp-debug-overlay-token-label-radius);
+
+                position: absolute;
+                z-index: 1;
+                display: inline-flex;
+                align-items: center;
+                max-width: min(180px, 36vw);
+                padding: var(--sp-debug-overlay-token-label-padding);
+                border-radius: var(--spdo-label-top-left-radius) var(--spdo-label-top-right-radius)
+                    var(--spdo-label-bottom-right-radius) var(--spdo-label-bottom-left-radius);
+                background: var(--spdo-label-bg);
+                color: var(--spdo-label-text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+                    monospace;
+                font-size: var(--sp-debug-overlay-token-label-font-size);
+                font-weight: 600;
+                line-height: 1.15;
+                letter-spacing: 0.01em;
+                white-space: nowrap;
+
+                &.spdo-label-left {
+                    --spdo-label-top-left-radius: 0;
+                    --spdo-label-bottom-left-radius: 0;
+                }
+
+                &.spdo-label-right {
+                    --spdo-label-top-right-radius: 0;
+                    --spdo-label-bottom-right-radius: 0;
+                }
+
+                &.spdo-label-center {
+                    left: 50%;
+                    transform: translateX(-50%);
+                }
+
+                &.spdo-label-internal {
+                    &[data-horizontal-fallback='left'] {
+                        --spdo-label-top-left-radius: 0;
+                        --spdo-label-bottom-left-radius: 0;
+
+                        left: var(--sp-debug-overlay-token-label-offset);
+                        transform: none;
+                    }
+
+                    &.spdo-label-top {
+                        --spdo-label-top-left-radius: 0;
+                        --spdo-label-top-right-radius: 0;
+
+                        top: var(--sp-debug-overlay-token-label-offset);
+                    }
+
+                    &.spdo-label-bottom {
+                        --spdo-label-bottom-right-radius: 0;
+                        --spdo-label-bottom-left-radius: 0;
+
+                        bottom: var(--sp-debug-overlay-token-label-offset);
+                    }
+
+                    &.spdo-label-left {
+                        left: var(--sp-debug-overlay-token-label-offset);
+                    }
+
+                    &.spdo-label-right {
+                        right: var(--sp-debug-overlay-token-label-offset);
+                    }
+                }
+
+                &.spdo-label-external {
+                    &.spdo-label-top {
+                        --spdo-label-bottom-right-radius: 0;
+                        --spdo-label-bottom-left-radius: 0;
+
+                        bottom: calc(100% + var(--sp-debug-overlay-token-label-offset));
+                    }
+
+                    &.spdo-label-bottom {
+                        --spdo-label-top-left-radius: 0;
+                        --spdo-label-top-right-radius: 0;
+
+                        top: calc(100% + var(--sp-debug-overlay-token-label-offset));
+                    }
+
+                    &.spdo-label-left {
+                        left: 0;
+                    }
+
+                    &.spdo-label-right {
+                        right: 0;
+                    }
+                }
+            }
+
+            .spdo-progress-range {
+                position: absolute;
+                inset: 0;
+
+                .spdo-progress-line {
+                    position: absolute;
+                    background: currentColor;
+                }
+
+                .spdo-progress-line-start {
+                    --spdo-label-bg: var(--sp-debug-overlay-token-progress-start-color);
+                    --spdo-label-text: var(--sp-debug-overlay-token-progress-start-label-text);
+
+                    color: var(--sp-debug-overlay-token-progress-start-color);
+                }
+
+                .spdo-progress-line-end {
+                    --spdo-label-bg: var(--sp-debug-overlay-token-progress-end-color);
+                    --spdo-label-text: var(--sp-debug-overlay-token-progress-end-label-text);
+
+                    color: var(--sp-debug-overlay-token-progress-end-color);
+                }
+
+                &.spdo-axis-y {
+                    .spdo-progress-line {
+                        left: 0;
+                        width: 100%;
+                        height: var(--sp-debug-overlay-token-line-width);
+                    }
+
+                    .spdo-progress-line-start {
+                        top: 0;
+                    }
+
+                    .spdo-progress-line-end {
+                        bottom: 0;
+                    }
+                }
+
+                &.spdo-axis-x {
+                    .spdo-progress-line {
+                        top: 0;
+                        width: var(--sp-debug-overlay-token-line-width);
+                        height: 100%;
+                    }
+
+                    .spdo-progress-label {
+                        &.spdo-label-external {
+                            --spdo-label-top-left-radius: var(
+                                --sp-debug-overlay-token-label-radius
+                            );
+                            --spdo-label-top-right-radius: var(
+                                --sp-debug-overlay-token-label-radius
+                            );
+                            --spdo-label-bottom-right-radius: var(
+                                --sp-debug-overlay-token-label-radius
+                            );
+                            --spdo-label-bottom-left-radius: var(
+                                --sp-debug-overlay-token-label-radius
+                            );
+
+                            &.spdo-label-top {
+                                top: var(--sp-debug-overlay-token-label-offset);
+                                bottom: auto;
+                            }
+
+                            &.spdo-label-bottom {
+                                top: auto;
+                                bottom: var(--sp-debug-overlay-token-label-offset);
+                            }
+
+                            &.spdo-label-left {
+                                --spdo-label-top-right-radius: 0;
+                                --spdo-label-bottom-right-radius: 0;
+
+                                right: calc(100% + var(--sp-debug-overlay-token-label-offset));
+                                left: auto;
+                            }
+
+                            &.spdo-label-right {
+                                --spdo-label-top-left-radius: 0;
+                                --spdo-label-bottom-left-radius: 0;
+
+                                right: auto;
+                                left: calc(100% + var(--sp-debug-overlay-token-label-offset));
+                            }
+                        }
+                    }
+
+                    .spdo-progress-line-start {
+                        left: 0;
+                    }
+
+                    .spdo-progress-line-end {
+                        right: 0;
+                    }
+                }
+            }
+        }
+    }
+}

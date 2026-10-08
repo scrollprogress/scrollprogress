@@ -1,0 +1,47 @@
+<div
+  data-core-target="boundary-events"
+  class="min-h-96 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-emerald-300/50"
+>
+  <p class="text-base font-semibold text-emerald-300">
+    Tracking boundaries · <code>onEnter / onLeave</code>
+  </p>
+  <h3 class="mt-3 text-3xl font-semibold">React once when tracking starts or stops</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> count discrete <code>onEnter</code> and
+      <code>onLeave</code> calls.
+    </p>
+    <p><strong class="text-neutral-200">Try:</strong> move this card through the viewport.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> each callback runs only when the card
+      crosses the center observation band.
+    </p>
+  </div>
+  <div
+    data-boundary-indicator
+    data-tracking="false"
+    class="mt-10 rounded-3xl border border-white/10 bg-black/20 p-6 transition data-[tracking=true]:border-emerald-300/40 data-[tracking=true]:bg-emerald-300/10"
+  >
+    <p class="text-xs uppercase tracking-[0.18em] text-neutral-500">Current tracking state</p>
+    <p data-boundary-status class="mt-3 text-xl font-medium">
+      Waiting for the first observer transition
+    </p>
+    <p class="mt-2 text-sm text-neutral-400">
+      Watched area (<code>observation area</code>): viewport center band
+    </p>
+  </div>
+  <dl class="mt-6 grid grid-cols-3 gap-3 text-sm">
+    <div>
+      <dt class="text-neutral-500"><code>onEnter</code> calls</dt>
+      <dd><output data-boundary-enter-count>0</output></dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500"><code>onLeave</code> calls</dt>
+      <dd><output data-boundary-leave-count>0</output></dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500">Last transition</dt>
+      <dd data-boundary-last-event>none</dd>
+    </div>
+  </dl>
+</div>

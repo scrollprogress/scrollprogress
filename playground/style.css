@@ -1,0 +1,378 @@
+@import 'tailwindcss';
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    margin: 0;
+}
+
+.playground-resources {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    color: var(--color-neutral-400);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.playground-resources nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem 0.65rem;
+}
+
+.playground-resources a:hover,
+.playground-resources a:focus-visible {
+    color: white;
+}
+
+.demo-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.demo-action {
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    background: rgb(255 255 255 / 0.05);
+    color: var(--color-neutral-100);
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.demo-action:hover,
+.demo-action:focus-visible {
+    border-color: rgb(103 232 249 / 0.65);
+    outline: none;
+}
+
+.demo-code-dialog {
+    width: min(72rem, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 1.5rem;
+    background: #0a0a0a;
+    color: #fafafa;
+}
+
+.demo-code-dialog::backdrop {
+    background: rgb(0 0 0 / 0.78);
+}
+
+.demo-code-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    max-height: calc(100dvh - 2rem);
+}
+
+.demo-code-header,
+.demo-code-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+}
+
+.demo-code-kicker,
+.demo-code-actions p {
+    margin: 0;
+    color: var(--color-neutral-400);
+    font-size: 0.75rem;
+}
+
+.demo-code-header h2 {
+    margin: 0.2rem 0 0;
+    font-size: 1.25rem;
+}
+
+.demo-code-close {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.demo-code-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.demo-code-tab {
+    padding: 0.75rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--color-neutral-400);
+    cursor: pointer;
+}
+
+.demo-code-tab[aria-selected='true'] {
+    border-color: var(--color-cyan-300);
+    color: white;
+}
+
+.demo-code-pre {
+    min-height: 18rem;
+    margin: 0;
+    padding: 1.25rem;
+    overflow: auto;
+    background: #050505;
+    color: var(--color-neutral-200);
+    font-size: 0.8rem;
+    line-height: 1.65;
+    white-space: pre;
+}
+
+.playground-nav-links {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.125rem 1.25rem;
+}
+
+.playground-nav-link {
+    position: relative;
+    padding: 0.5rem 0;
+    color: var(--color-neutral-400);
+    transition: color 160ms ease;
+}
+
+.playground-nav-link::after {
+    position: absolute;
+    bottom: 0.25rem;
+    left: 50%;
+    width: 1.25rem;
+    height: 1px;
+    content: '';
+    background: var(--color-neutral-500);
+    transform: translateX(-50%) scaleX(0);
+    transform-origin: center;
+    transition:
+        background-color 160ms ease,
+        transform 160ms ease;
+}
+
+.playground-nav-link:hover,
+.playground-nav-link[aria-current='page'] {
+    color: var(--color-white);
+}
+
+.playground-nav-link:hover::after,
+.playground-nav-link[aria-current='page']::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.playground-nav-link[aria-current='page']::after {
+    background: var(--color-white);
+}
+
+code,
+pre,
+output {
+    font-variant-ligatures: none;
+}
+
+[data-scroll-region],
+[data-core-root],
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-color: rgb(103 232 249 / 0.72) rgb(255 255 255 / 0.08);
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+}
+
+[data-scroll-region]:focus-visible {
+    outline: 2px solid rgb(103 232 249 / 0.75);
+    outline-offset: 3px;
+}
+
+[data-scroll-region]::-webkit-scrollbar {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+[data-scroll-region]::-webkit-scrollbar-track {
+    background: rgb(255 255 255 / 0.08);
+}
+
+[data-scroll-region]::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: rgb(103 232 249 / 0.72);
+    background-clip: padding-box;
+}
+
+[data-core-root='vertical'] {
+    touch-action: pan-y;
+}
+
+[data-core-root='horizontal'] {
+    touch-action: pan-x;
+    scrollbar-color: rgb(253 165 213 / 0.7) rgb(255 255 255 / 0.08);
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+}
+
+[data-core-root='horizontal']::-webkit-scrollbar {
+    height: 0.875rem;
+}
+
+[data-core-root='horizontal']::-webkit-scrollbar-track {
+    background: rgb(255 255 255 / 0.08);
+    border-radius: 999px;
+}
+
+[data-core-root='horizontal']::-webkit-scrollbar-thumb {
+    background: rgb(253 165 213 / 0.7);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+}
+
+[data-core-target='css-var'] [data-css-var-visual] {
+    opacity: var(--demo-progress, 0);
+    transform: scale(var(--demo-progress, 0));
+}
+
+.milestone-step {
+    opacity: 0.32;
+    transform: translateY(12px);
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease,
+        border-color 180ms ease,
+        background-color 180ms ease;
+}
+
+.milestone-step[data-unlocked='true'] {
+    opacity: 1;
+    transform: translateY(0);
+    border-color: color-mix(in oklab, var(--color-fuchsia-300) 45%, transparent);
+    background-color: color-mix(in oklab, var(--color-fuchsia-300) 10%, transparent);
+}
+
+.direction-toolbar {
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+[data-experiment-target='direction'][data-toolbar-visible='false'] .direction-toolbar {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+.preload-card {
+    position: relative;
+    transition: border-color 180ms ease;
+}
+
+.preload-card[data-load-state='loading'] {
+    border-color: color-mix(in oklab, var(--color-teal-300) 45%, transparent);
+}
+
+.preload-card[data-load-state='ready'] {
+    border-color: color-mix(in oklab, var(--color-teal-300) 70%, transparent);
+}
+
+.preload-skeleton {
+    min-height: 20rem;
+    transition: opacity 220ms ease;
+}
+
+.preload-card[data-load-state='loading'] .preload-skeleton > * {
+    animation: preload-pulse 900ms ease-in-out infinite alternate;
+}
+
+.preload-card[data-load-state='ready'] .preload-skeleton {
+    opacity: 0;
+}
+
+.preload-content {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 100ms linear;
+}
+
+@keyframes preload-pulse {
+    to {
+        opacity: 0.45;
+    }
+}
+
+@keyframes feed-item-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+.generated-feed-item {
+    animation: feed-item-enter 240ms ease-out both;
+}
+
+.scroll-progress-debug-palette.playground-debug-palette {
+    --sp-debug-palette-bg: rgba(2, 6, 23, 0.96);
+    --sp-debug-palette-width: 360px;
+    --sp-debug-palette-radius: 16px;
+}
+
+html.playground-shell,
+html.playground-shell body {
+    min-width: 320px;
+}
+
+@media (max-width: 767px) {
+    html.playground-shell,
+    html.playground-shell body {
+        max-width: 100%;
+        overflow-x: clip;
+        overscroll-behavior-x: none;
+    }
+
+    @supports not (overflow-x: clip) {
+        html.playground-shell,
+        html.playground-shell body {
+            overflow-x: hidden;
+        }
+    }
+}
+
+html.playground-document-x {
+    min-width: 100%;
+    min-height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+}
+
+html.playground-document-x body {
+    min-width: 100%;
+    min-height: 100%;
+    overflow: visible;
+}
+
+.viewport-x-page {
+    position: relative;
+    width: 300vw;
+    min-height: 100vh;
+}

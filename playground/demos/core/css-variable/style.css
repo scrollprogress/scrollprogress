@@ -1,0 +1,4 @@
+[data-core-target='css-var'] [data-css-var-visual] {
+    opacity: var(--demo-progress, 0);
+    transform: scale(var(--demo-progress, 0));
+}

@@ -1,0 +1,132 @@
+<div class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.2em] text-teal-300">Observation + progress</p>
+  <h2 class="mt-3 text-4xl font-semibold tracking-tight">
+    Load the next story before it becomes visible
+  </h2>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> start work 160px before the target, then use
+      progress to reveal it.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> scroll the feed to the dashed marker.
+      Trackpad/touch: swipe · Mouse: wheel or scrollbar · Keyboard: focus it and use ↑ / ↓.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> resource state moves from idle to loading to
+      ready before reveal progress starts changing.
+    </p>
+  </div>
+</div>
+<div class="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
+  <div class="rounded-3xl border border-white/10 bg-teal-950/20 p-4 sm:p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-2 text-xs">
+        <span class="rounded-full border border-white/10 px-3 py-1 text-neutral-400"
+          >Resource: <strong data-preload-status class="font-medium text-white">idle</strong></span
+        >
+        <span class="rounded-full border border-white/10 px-3 py-1 text-neutral-400"
+          >Reveal:
+          <output data-preload-progress class="font-mono text-teal-300">0.000</output></span
+        >
+      </div>
+      <button
+        type="button"
+        data-preload-reset
+        class="rounded-full border border-teal-300/25 px-3 py-1 text-xs text-teal-200 hover:bg-teal-300/10"
+      >
+        Reset demo
+      </button>
+    </div>
+    <div
+      data-experiment-root="preload"
+      data-scroll-region
+      tabindex="0"
+      role="region"
+      aria-label="Predictive preload feed"
+      class="relative h-[34rem] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-neutral-950"
+    >
+      <div
+        class="sticky top-0 z-20 border-b border-white/10 bg-neutral-950/90 px-5 py-3 text-xs text-neutral-400 backdrop-blur"
+      >
+        Visible feed viewport · scroll down
+      </div>
+      <div class="space-y-4 p-5">
+        <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p class="text-xs uppercase tracking-[0.18em] text-neutral-500">Existing item</p>
+          <h3 class="mt-2 text-xl font-semibold">Feed item 01</h3>
+          <p class="mt-3 text-sm leading-6 text-neutral-400">
+            Existing content establishes enough distance for the upcoming card to begin outside the
+            expanded observation area.
+          </p>
+        </article>
+        <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p class="text-xs uppercase tracking-[0.18em] text-neutral-500">Existing item</p>
+          <h3 class="mt-2 text-xl font-semibold">Feed item 02</h3>
+          <p class="mt-3 text-sm leading-6 text-neutral-400">
+            Keep scrolling until the dashed preload marker reaches the viewport edge.
+          </p>
+        </article>
+        <div class="h-64" aria-hidden="true"></div>
+        <div>
+          <div data-preload-boundary class="flex items-center gap-3 text-xs text-teal-300">
+            <span class="h-px flex-1 border-t border-dashed border-teal-300/70"></span>
+            <span>Preload boundary · target is still 160px away</span>
+            <span class="h-px flex-1 border-t border-dashed border-teal-300/70"></span>
+          </div>
+          <article
+            data-experiment-target="preload"
+            data-load-state="idle"
+            class="preload-card mt-40 min-h-80 overflow-hidden rounded-3xl border border-teal-200/15 bg-teal-950"
+          >
+            <div data-preload-skeleton class="preload-skeleton p-7" aria-hidden="true">
+              <div class="h-40 rounded-2xl bg-white/8"></div>
+              <div class="mt-6 h-3 w-28 rounded-full bg-white/10"></div>
+              <div class="mt-3 h-7 w-4/5 rounded-full bg-white/10"></div>
+              <div class="mt-3 h-3 w-3/5 rounded-full bg-white/8"></div>
+            </div>
+            <div data-preload-content class="preload-content p-7" aria-hidden="true">
+              <div
+                class="h-40 rounded-2xl bg-gradient-to-br from-teal-200 via-emerald-500 to-cyan-950"
+              ></div>
+              <p class="mt-6 text-xs uppercase tracking-[0.2em] text-teal-300">
+                Remote story · prepared early
+              </p>
+              <h3 class="mt-3 text-3xl font-semibold">Prepared target content</h3>
+              <p class="mt-3 leading-7 text-neutral-300">
+                The request belongs to observation. This reveal belongs to geometric progress.
+              </p>
+            </div>
+          </article>
+        </div>
+        <div class="h-48" aria-hidden="true"></div>
+      </div>
+      <div
+        class="pointer-events-none sticky bottom-0 z-20 border-t border-teal-300/30 bg-teal-950/90 px-5 py-3 text-xs text-teal-200 backdrop-blur"
+      >
+        Visible viewport ends here · observation continues 160px below
+      </div>
+    </div>
+  </div>
+  <aside class="self-start rounded-3xl border border-white/10 bg-black/25 p-6 xl:sticky xl:top-24">
+    <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Expected sequence</p>
+    <ol class="mt-4 space-y-4 text-sm leading-6 text-neutral-400">
+      <li>
+        <strong class="text-white">1 · Idle.</strong> The remote card is outside the enlarged
+        observation area.
+      </li>
+      <li>
+        <strong class="text-white">2 · Loading.</strong> The dashed marker reaches the visible edge
+        while the card is still 160px away.
+      </li>
+      <li>
+        <strong class="text-white">3 · Ready.</strong> The simulated resource completes
+        independently of scrolling.
+      </li>
+      <li>
+        <strong class="text-white">4 · Reveal.</strong> Progress changes only when the actual card
+        traverses its geometric range.
+      </li>
+    </ol>
+  </aside>
+</div>

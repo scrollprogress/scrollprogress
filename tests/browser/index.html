@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScrollProgress installed-package smoke</title>
+  <style>
+    body{font:16px system-ui;margin:24px;color:#17252c;background:#f4f7f7}pre{white-space:pre-wrap}button,a{margin-right:16px}#fixtures{position:relative}button{font:inherit;padding:10px}
+  </style>
+  <h1>Installed-package browser smoke</h1>
+  <p>
+    Runs against @scrollprogress/scrollprogress installed from the inspected tarball. Native
+    observers and animation frames.
+  </p>
+  <p>
+    Start with <code>npm run consumer:browser</code> in the repository and open the printed HTTP
+    link. Opening this HTML file directly does not run the tests.
+  </p>
+  <button id="run">Run smoke tests</button
+  ><a href="manual.html">Manual device checks</a
+  ><a href="benchmark.html">Performance baseline</a>
+  <button id="save-report" disabled>Save report (JSON)</button>
+  <p id="report-status" role="status">Report tools loading…</p>
+  <details>
+    <summary>Report details: browser, device and notes</summary>
+    <fieldset id="report-controls">
+      <legend>Fill in actual versions; the user agent may be incomplete.</legend>
+    </fieldset>
+  </details>
+  <pre id="results">Ready</pre>
+  <div id="fixtures"></div>
+  <script type="module" src="./smoke.js"></script>
+</html>

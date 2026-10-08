@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en" class="playground-shell">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Manual ScrollProgress checks for progress ranges, custom roots and tracker lifecycle."
+    />
+    <title>Core examples · ScrollProgress playground</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body class="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
+    <header class="border-b border-white/10 bg-neutral-950/90 backdrop-blur">
+      <nav
+        aria-label="Playground"
+        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"
+      >
+        <a href="./index.html" class="text-sm font-semibold tracking-wide text-white">
+          ScrollProgress
+        </a>
+        <div class="playground-nav-links text-sm lg:w-auto lg:justify-end">
+          <a href="./index.html" class="playground-nav-link">Home</a>
+          <a href="./core.html" aria-current="page" class="playground-nav-link">Core</a>
+          <a href="./experiments.html" class="playground-nav-link">Experiments</a>
+          <a href="./debug.html" class="playground-nav-link"> Debug </a>
+          <a href="./viewport-x.html" class="playground-nav-link"> Viewport X </a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-6 py-16">
+      <section class="max-w-3xl py-16">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300">
+          Core verification
+        </p>
+        <h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-6xl">
+          Core behavior, one check at a time.
+        </h1>
+        <p class="mt-6 text-lg leading-8 text-neutral-400">
+          Follow <strong class="font-medium text-neutral-200">Try</strong>, compare the result with
+          <strong class="font-medium text-neutral-200">Expect</strong>, then open
+          <strong class="font-medium text-neutral-200">Demo code</strong> to inspect or download the
+          complete example.
+        </p>
+      </section>
+
+      <nav aria-label="Core example groups" class="sticky top-0 z-20 mt-10">
+        <div class="flex flex-wrap gap-2 bg-neutral-950/90 py-3 text-sm backdrop-blur">
+          <a
+            href="#essentials"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+          >
+            Essentials
+          </a>
+          <a
+            href="#custom-roots"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+          >
+            Custom roots
+          </a>
+          <a
+            href="#lifecycle"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+          >
+            Lifecycle
+          </a>
+          <a
+            href="#advanced"
+            class="rounded-full border border-white/10 px-4 py-2 hover:bg-white/5"
+          >
+            Advanced
+          </a>
+        </div>
+      </nav>
+
+      <section id="essentials" class="scroll-mt-24 pt-24" aria-labelledby="essentials-title">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300">Essentials</p>
+        <h2 id="essentials-title" class="mt-3 text-4xl font-semibold tracking-tight">
+          Turn geometric progress into UI.
+        </h2>
+
+        <article id="progress-callback" class="mt-10 scroll-mt-24 grid gap-6">
+          <!-- playground-demo:core/progress-bar -->
+          <div class="demo-action-row" data-demo-actions="core/progress-bar"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/css-variable -->
+          <div class="demo-action-row" data-demo-actions="core/css-variable"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/web-animations -->
+          <div class="demo-action-row" data-demo-actions="core/web-animations"></div>
+        </article>
+      </section>
+
+      <section id="custom-roots" class="scroll-mt-24 pt-28" aria-labelledby="roots-title">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-emerald-300">Custom roots</p>
+        <h2 id="roots-title" class="mt-3 text-4xl font-semibold tracking-tight">
+          Track inside nested scrollers.
+        </h2>
+
+        <article class="mt-10 grid gap-6">
+          <!-- playground-demo:core/custom-root-y -->
+          <div class="demo-action-row" data-demo-actions="core/custom-root-y"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/custom-root-x -->
+          <div class="demo-action-row" data-demo-actions="core/custom-root-x"></div>
+        </article>
+      </section>
+
+      <section id="lifecycle" class="scroll-mt-24 pt-28" aria-labelledby="lifecycle-title">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-amber-300">Lifecycle</p>
+        <h2 id="lifecycle-title" class="mt-3 text-4xl font-semibold tracking-tight">
+          Options and explicit ownership.
+        </h2>
+
+        <article class="mt-10 grid gap-6">
+          <!-- playground-demo:core/inverted -->
+          <div class="demo-action-row" data-demo-actions="core/inverted"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/boundary-events -->
+          <div class="demo-action-row" data-demo-actions="core/boundary-events"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/once -->
+          <div class="demo-action-row" data-demo-actions="core/once"></div>
+        </article>
+
+        <article class="mt-8 grid gap-6">
+          <!-- playground-demo:core/lifecycle -->
+          <div class="demo-action-row" data-demo-actions="core/lifecycle"></div>
+        </article>
+      </section>
+
+      <section id="advanced" class="scroll-mt-24 pt-28" aria-labelledby="advanced-title">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-violet-300">Advanced</p>
+        <h2 id="advanced-title" class="mt-3 text-4xl font-semibold tracking-tight">
+          Read geometry without owning a tracker.
+        </h2>
+
+        <article class="mt-10 grid gap-6">
+          <!-- playground-demo:core/one-shot-read -->
+          <div class="demo-action-row" data-demo-actions="core/one-shot-read"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="playground-resources">
+      <nav aria-label="Project resources">
+        <a href="https://scrollprogress.com">Public site</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://scrollprogress.com/docs">Docs</a>
+        <span aria-hidden="true">·</span>
+        <a href="./index.html">Playground</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/scrollprogress/scrollprogress">GitHub</a>
+        <span aria-hidden="true">·</span>
+        <a href="mailto:team@scrollprogress.com">Email</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="./core.ts"></script>
+  </body>
+</html>

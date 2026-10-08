@@ -1,0 +1,26 @@
+{
+  "posts": [
+    {
+      "id": 104,
+      "category": "Performance",
+      "title": "Load only when the next results become relevant",
+      "excerpt": "A nearby sentinel delays optional work while still giving the interface enough time to append the next page smoothly.",
+      "readTime": "6 min read"
+    },
+    {
+      "id": 105,
+      "category": "Interaction design",
+      "title": "Let appended content move the boundary naturally",
+      "excerpt": "New cards push the sentinel forward, allowing a second entry to trigger the next request without a separate scroll listener.",
+      "readTime": "5 min read"
+    },
+    {
+      "id": 106,
+      "category": "Lifecycle",
+      "title": "Release observation when the final page arrives",
+      "excerpt": "A null next-page reference makes the terminal condition explicit and lets the component destroy a tracker it no longer needs.",
+      "readTime": "4 min read"
+    }
+  ],
+  "next": null
+}

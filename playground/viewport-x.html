@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" class="playground-document-x">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Test ScrollProgress with document-level horizontal scrolling and the viewport root."
+    />
+    <title>Viewport X · ScrollProgress playground</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="bg-neutral-950 text-neutral-100 antialiased">
+    <header
+      class="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-neutral-950/90 backdrop-blur"
+    >
+      <nav
+        aria-label="Playground"
+        class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6"
+      >
+        <a href="./index.html" class="text-sm font-semibold tracking-wide text-white"
+          >ScrollProgress</a
+        >
+        <div class="playground-nav-links text-xs sm:text-sm lg:w-auto lg:justify-end">
+          <a href="./index.html" class="playground-nav-link">Home</a>
+          <a href="./core.html" class="playground-nav-link">Core</a>
+          <a href="./experiments.html" class="playground-nav-link">Experiments</a>
+          <a href="./debug.html" class="playground-nav-link">Debug</a>
+          <a href="./viewport-x.html" aria-current="page" class="playground-nav-link">Viewport X</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- playground-demo:edge/viewport-x -->
+
+    <script type="module" src="./viewport-x.ts"></script>
+  </body>
+</html>

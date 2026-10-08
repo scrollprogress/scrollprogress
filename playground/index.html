@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" class="playground-shell">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Explore ScrollProgress through core primitives, real interfaces, advanced experiments and debug tools."
+    />
+    <title>ScrollProgress playground</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="flex min-h-svh flex-col bg-neutral-950 text-neutral-100 antialiased">
+    <header class="border-b border-white/10 bg-neutral-950/90 backdrop-blur">
+      <nav
+        aria-label="Playground"
+        class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"
+      >
+        <a href="./index.html" class="text-sm font-semibold tracking-wide text-white"
+          >ScrollProgress</a
+        >
+        <div class="playground-nav-links text-sm lg:w-auto lg:justify-end">
+          <a href="./index.html" aria-current="page" class="playground-nav-link">Home</a>
+          <a href="./core.html" class="playground-nav-link">Core</a>
+          <a href="./experiments.html" class="playground-nav-link">Experiments</a>
+          <a href="./debug.html" class="playground-nav-link">Debug</a>
+          <a href="./viewport-x.html" class="playground-nav-link">Viewport X</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 py-20">
+      <div class="max-w-3xl">
+        <p class="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300">Playground</p>
+        <h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-6xl">
+          ScrollProgress verification workspace.
+        </h1>
+        <p class="mt-5 text-lg leading-8 text-neutral-400">
+          Manual checks for core behavior, application scenarios and debug tools.
+        </p>
+      </div>
+
+      <section class="mt-12 grid gap-5 lg:grid-cols-3" aria-label="Playground areas">
+        <article class="flex flex-col rounded-3xl border border-white/10 bg-white/3 p-6">
+          <p class="text-sm font-medium text-cyan-300">Start here · Core</p>
+          <h2 class="mt-3 text-2xl font-semibold">Geometry and lifecycle</h2>
+          <p class="mt-3 grow leading-7 text-neutral-400">
+            Learn the basics, then check scroll containers, direction and tracker lifecycle.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3 text-sm font-medium">
+            <a href="./core.html" class="text-white hover:text-cyan-200">Open Core →</a>
+            <a href="./viewport-x.html" class="text-purple-300 hover:text-purple-200"
+              >Viewport X →</a
+            >
+          </div>
+        </article>
+
+        <article class="flex flex-col rounded-3xl border border-white/10 bg-white/3 p-6">
+          <p class="text-sm font-medium text-teal-300">Advanced · Experiments</p>
+          <h2 class="mt-3 text-2xl font-semibold">Application scenarios</h2>
+          <p class="mt-3 grow leading-7 text-neutral-400">
+            Try practical patterns for preloading, milestones, responsive layouts and JSON feeds.
+          </p>
+          <a
+            href="./experiments.html"
+            class="mt-8 text-sm font-medium text-white hover:text-teal-200"
+            >Open Experiments →</a
+          >
+        </article>
+
+        <article class="flex flex-col rounded-3xl border border-white/10 bg-white/3 p-6">
+          <p class="text-sm font-medium text-fuchsia-300">Diagnostics · Debug</p>
+          <h2 class="mt-3 text-2xl font-semibold">Visual diagnostics</h2>
+          <p class="mt-3 grow leading-7 text-neutral-400">
+            Inspect ten tracker instances with the palette, overlay, console and both themes.
+          </p>
+          <a href="./debug.html" class="mt-8 text-sm font-medium text-white hover:text-fuchsia-200"
+            >Open Debug →</a
+          >
+        </article>
+      </section>
+    </main>
+    <footer class="playground-resources">
+      <nav aria-label="Project resources">
+        <a href="https://scrollprogress.com">Public site</a><span aria-hidden="true">·</span>
+        <a href="https://scrollprogress.com/docs">Docs</a><span aria-hidden="true">·</span>
+        <a href="./index.html">Playground</a><span aria-hidden="true">·</span>
+        <a href="https://github.com/scrollprogress/scrollprogress">GitHub</a
+        ><span aria-hidden="true">·</span>
+        <a href="mailto:team@scrollprogress.com">Email</a>
+      </nav>
+    </footer>
+  </body>
+</html>

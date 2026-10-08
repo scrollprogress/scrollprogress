@@ -1,0 +1,76 @@
+name: Stage npm release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    name: Verify and stage package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm-release
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+
+      - name: Install the pinned npm version
+        run: npm install --global npm@11.16.0
+
+      - name: Verify release identity
+        id: release
+        shell: bash
+        run: |
+          package_name="$(node -p "require('./package.json').name")"
+          package_version="$(node -p "require('./package.json').version")"
+
+          test "$package_name" = "@scrollprogress/scrollprogress"
+          test "$GITHUB_REF_NAME" = "v${package_version}"
+
+          if [[ "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+            dist_tag="rc"
+          elif [[ "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+            dist_tag="beta"
+          elif [[ "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            dist_tag="latest"
+          else
+            echo "Unsupported release version: ${package_version}" >&2
+            exit 1
+          fi
+
+          echo "dist_tag=${dist_tag}" >> "$GITHUB_OUTPUT"
+
+          node --version
+          npm --version
+          echo "Package: ${package_name}@${package_version}"
+          echo "npm dist-tag: ${dist_tag}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify package
+        run: npm run verify
+
+      - name: Build playground
+        run: npm run play:build
+
+      - name: Stage package on npm
+        run: npm stage publish --access public --tag "${{ steps.release.outputs.dist_tag }}"

@@ -1,0 +1,29 @@
+[data-experiment-root] {
+    overscroll-behavior: contain;
+    scrollbar-color: #5eead4 #222;
+    scrollbar-gutter: stable;
+}
+
+.preload-card {
+    position: relative;
+}
+.preload-skeleton {
+    min-height: 20rem;
+    transition: opacity 220ms ease;
+}
+.preload-card[data-load-state='loading'] .preload-skeleton > * {
+    animation: preload-pulse 900ms ease-in-out infinite alternate;
+}
+.preload-card[data-load-state='ready'] .preload-skeleton {
+    opacity: 0;
+}
+.preload-content {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+}
+@keyframes preload-pulse {
+    to {
+        opacity: 0.45;
+    }
+}

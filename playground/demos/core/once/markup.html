@@ -1,0 +1,33 @@
+<div
+  data-core-target="once"
+  class="min-h-80 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-lime-300/50"
+>
+  <p class="text-base font-semibold text-lime-300">One completed cycle · <code>once</code></p>
+  <h3 class="mt-3 text-3xl font-semibold">Clean up after the first completed cycle</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> release tracking after one complete cycle
+      with <code>once</code>.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> scroll until progress reaches 1, then scroll
+      back; use the button to start again.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> the final update is delivered, then tracking
+      stops until the tracker is recreated.
+    </p>
+  </div>
+  <output data-demo-progress="once" class="mt-10 block font-mono text-6xl">0.000</output>
+  <p class="mt-5 text-sm text-neutral-400">Status: <span data-demo-tracking="once">idle</span></p>
+  <p class="mt-2 text-sm text-neutral-400">
+    Direction: <span data-demo-direction="once">none</span>
+  </p>
+  <button
+    type="button"
+    data-once-recreate
+    class="mt-8 rounded-full border border-lime-300/30 px-4 py-2 text-sm font-medium text-lime-100 hover:bg-lime-300/10"
+  >
+    Recreate tracker
+  </button>
+</div>

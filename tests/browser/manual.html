@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScrollProgress physical-device checks</title>
+  <style>
+    body{margin:0;font:14px system-ui}.toolbar{position:fixed;top:0;left:0;z-index:10;background:#eff6f5ee;padding:10px;max-width:calc(100vw - 20px);max-height:48vh;overflow:auto}label{display:inline-block;margin:4px}button,input,select{font:inherit}pre{max-width:90vw;white-space:pre-wrap}#root{margin:55vh 20px 0;border:8px solid #315c6a;overflow:auto;width:75vw;height:35vh}#target{position:absolute;width:140px;height:140px;background:#34c5b0;color:#123;padding:12px;box-sizing:border-box}#target::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:8px;background:#152f3c;transform:scaleX(var(--manual-progress,0));transform-origin:left}
+  </style>
+  <section class="toolbar">
+    <a href="index.html">Smoke</a>
+    <h1>Physical-device checks</h1>
+    <p>
+      Start with <code>npm run consumer:browser</code> in the repository and open the printed HTTP
+      link. Opening this HTML file directly does not run the tests.
+    </p>
+    <label
+      >Root
+      <select id="mode">
+        <option value="viewport">Viewport</option>
+        <option value="custom">Custom</option>
+      </select></label
+    >
+    <label
+      >Axis
+      <select id="axis">
+        <option>x</option>
+        <option>y</option>
+      </select></label
+    >
+    <label><input id="inverted" type="checkbox" /> inverted</label
+    ><label><input id="once" type="checkbox" /> once</label
+    ><label><input id="gate" type="checkbox" /> requireRootVisible</label>
+    <label>start <input id="start" type="number" value="0.8" step="0.1" style="width:4em" /></label
+    ><label>end <input id="end" type="number" value="0.2" step="0.1" style="width:4em" /></label>
+    <label>rootMargin <input id="margin" value="0px" size="12" /></label
+    ><label>threshold <input id="threshold" value="[0,0.5,1]" size="12" /></label>
+    <button id="create">Create/recreate</button><button id="update">Update existing</button
+    ><button id="destroy">Destroy</button><button id="debug">Toggle debug views</button
+    ><button id="snapshot">Record snapshot</button>
+    <button id="save-report" disabled>Save report (JSON)</button>
+    <p id="report-status" role="status">Report tools loading…</p>
+    <details>
+      <summary>Report details: browser, device and notes</summary>
+      <fieldset id="report-controls">
+        <legend>Fill in actual versions; the user agent may be incomplete.</legend>
+      </fieldset>
+    </details>
+    <pre id="status"></pre>
+    <details>
+      <summary>Session report and recorded snapshots</summary>
+      <pre id="log"></pre>
+    </details>
+  </section>
+  <div id="space">
+    <div id="root">
+      <div id="content"><div id="target">Scroll target</div></div>
+    </div>
+  </div>
+  <script type="module" src="./manual.js"></script>
+</html>

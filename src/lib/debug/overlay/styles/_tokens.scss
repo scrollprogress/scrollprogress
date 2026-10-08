@@ -1,0 +1,31 @@
+.scroll-progress-debug-overlay {
+    --sp-debug-overlay-token-z-index: var(--sp-debug-overlay-z-index);
+
+    --sp-debug-overlay-token-target-color: var(--sp-debug-overlay-target-color);
+    --sp-debug-overlay-token-progress-start-color: var(--sp-debug-overlay-progress-start-color);
+    --sp-debug-overlay-token-progress-end-color: var(--sp-debug-overlay-progress-end-color);
+    --sp-debug-overlay-token-root-color: var(--sp-debug-overlay-root-color);
+    --sp-debug-overlay-token-margin-color: var(--sp-debug-overlay-margin-color);
+    --sp-debug-overlay-token-intersection-color: var(--sp-debug-overlay-intersection-color);
+
+    --sp-debug-overlay-token-line-width: var(--sp-debug-overlay-line-width);
+
+    --sp-debug-overlay-token-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-token-target-label-text: var(--sp-debug-overlay-target-label-text);
+    --sp-debug-overlay-token-progress-start-label-text: var(
+        --sp-debug-overlay-progress-start-label-text
+    );
+    --sp-debug-overlay-token-progress-end-label-text: var(
+        --sp-debug-overlay-progress-end-label-text
+    );
+    --sp-debug-overlay-token-root-label-text: var(--sp-debug-overlay-root-label-text);
+    --sp-debug-overlay-token-margin-label-text: var(--sp-debug-overlay-margin-label-text);
+    --sp-debug-overlay-token-intersection-label-text: var(
+        --sp-debug-overlay-intersection-label-text
+    );
+
+    --sp-debug-overlay-token-label-font-size: var(--sp-debug-overlay-label-font-size);
+    --sp-debug-overlay-token-label-padding: var(--sp-debug-overlay-label-padding);
+    --sp-debug-overlay-token-label-radius: var(--sp-debug-overlay-label-radius);
+    --sp-debug-overlay-token-label-offset: var(--sp-debug-overlay-label-offset);
+}

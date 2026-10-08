@@ -1,0 +1,71 @@
+<div class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.2em] text-fuchsia-300">
+    Continuous → discrete
+  </p>
+  <h2 class="mt-3 text-4xl font-semibold tracking-tight">Unlock content at stable milestones</h2>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> convert continuous progress into four fixed
+      thresholds.
+    </p>
+    <p><strong class="text-neutral-200">Try:</strong> scroll past the milestone panel.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> steps unlock at 15%, 40%, 65% and 90%, then
+      lock again when progress decreases.
+    </p>
+  </div>
+</div>
+<div class="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
+  <div
+    data-experiment-target="milestones"
+    class="min-h-[34rem] rounded-3xl border border-white/10 bg-fuchsia-950/20 p-8"
+  >
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-fuchsia-300">Launch sequence</span
+      ><output data-milestone-progress class="font-mono text-sm">0.000</output>
+    </div>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2">
+      <article
+        data-milestone-step
+        data-unlocked="false"
+        class="milestone-step rounded-2xl border border-white/10 bg-white/5 p-5"
+      >
+        <span class="text-xs text-fuchsia-300">15%</span>
+        <h3 class="mt-2 text-xl font-semibold">Discover</h3>
+      </article>
+      <article
+        data-milestone-step
+        data-unlocked="false"
+        class="milestone-step rounded-2xl border border-white/10 bg-white/5 p-5"
+      >
+        <span class="text-xs text-fuchsia-300">40%</span>
+        <h3 class="mt-2 text-xl font-semibold">Compare</h3>
+      </article>
+      <article
+        data-milestone-step
+        data-unlocked="false"
+        class="milestone-step rounded-2xl border border-white/10 bg-white/5 p-5"
+      >
+        <span class="text-xs text-fuchsia-300">65%</span>
+        <h3 class="mt-2 text-xl font-semibold">Configure</h3>
+      </article>
+      <article
+        data-milestone-step
+        data-unlocked="false"
+        class="milestone-step rounded-2xl border border-white/10 bg-white/5 p-5"
+      >
+        <span class="text-xs text-fuchsia-300">90%</span>
+        <h3 class="mt-2 text-xl font-semibold">Launch</h3>
+      </article>
+    </div>
+  </div>
+  <aside class="rounded-3xl border border-white/10 bg-black/25 p-6">
+    <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+      Important constraint
+    </p>
+    <p class="mt-4 text-sm leading-6 text-neutral-400">
+      Toggle visual state, not document structure. Appending content inside the measured target
+      would move its endpoint.
+    </p>
+  </aside>
+</div>

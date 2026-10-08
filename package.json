@@ -1,0 +1,126 @@
+{
+  "name": "@scrollprogress/scrollprogress",
+  "version": "1.0.0-rc.1",
+  "packageManager": "npm@11.16.0",
+  "license": "MIT",
+  "author": {
+    "name": "Gianluca Ugolini",
+    "email": "team@scrollprogress.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scrollprogress/scrollprogress.git"
+  },
+  "homepage": "https://github.com/scrollprogress/scrollprogress#readme",
+  "bugs": {
+    "url": "https://github.com/scrollprogress/scrollprogress/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./debug": {
+      "types": "./dist/debug/index.d.ts",
+      "import": "./dist/debug/index.js"
+    },
+    "./debug/registry": {
+      "types": "./dist/debug/registry/index.d.ts",
+      "import": "./dist/debug/registry/index.js"
+    },
+    "./debug/palette": {
+      "types": "./dist/debug/palette/index.d.ts",
+      "import": "./dist/debug/palette/index.js"
+    },
+    "./debug/console": {
+      "types": "./dist/debug/console/index.d.ts",
+      "import": "./dist/debug/console/index.js"
+    },
+    "./debug/overlay": {
+      "types": "./dist/debug/overlay/index.d.ts",
+      "import": "./dist/debug/overlay/index.js"
+    },
+    "./debug/session": {
+      "types": "./dist/debug/session/index.d.ts",
+      "import": "./dist/debug/session/index.js"
+    },
+    "./debug/themes/neon-grid.css": "./src/lib/debug/themes/neon-grid.css",
+    "./debug/themes/paper.css": "./src/lib/debug/themes/paper.css"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/lib/debug/themes",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/scroll-progress-core.md",
+    "docs/api.md",
+    "docs/debug.md",
+    "docs/debug-overlay.md",
+    "docs/theming.md",
+    "docs/examples/debug-palette-theme.css",
+    "docs/examples/debug-overlay-theme.css",
+    "docs/compatibility.md",
+    "docs/recipes.md"
+  ],
+  "scripts": {
+    "dev": "npm run play",
+    "dev:host": "npm run play:host",
+    "play": "vite playground --config ./vite.config.ts",
+    "play:host": "vite playground --config ./vite.config.ts --host",
+    "play:build": "npm run check:playground && vite build playground --config ./vite.config.ts",
+    "play:preview": "vite preview playground --config ./vite.config.ts",
+    "lib:dev": "tsc --project ./tsconfig.lib.json --noEmit --watch",
+    "lib:build": "npm run check:lib && vite build --config ./vite.lib.config.ts && tsc --project ./tsconfig.build.json",
+    "check": "tsc --noEmit",
+    "check:lib": "tsc --project ./tsconfig.lib.json --noEmit",
+    "check:playground": "tsc --project ./tsconfig.playground.json --noEmit",
+    "exports:check": "node scripts/check-exports.mjs",
+    "entries:test": "vitest run --config vitest.entries.config.ts",
+    "pack:check": "npm run lib:build && npm run exports:check && npm run entries:test && npm pack --dry-run",
+    "consumer:check": "npm run lib:build && node scripts/check-consumer.mjs",
+    "consumer:browser": "npm run lib:build && node scripts/check-consumer.mjs --serve",
+    "benchmark:browser": "npm run lib:build && vite --config ./tests/browser/vite.config.mjs",
+    "tooling:test": "node --test tests/tooling/*.test.mjs",
+    "test": "vitest run --config vite.lib.config.ts",
+    "test:watch": "vitest --config vite.lib.config.ts",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "npm run check && eslint . --max-warnings 0",
+    "verify": "npm run pack:check && npm run lint && npm run format:check && npm test && npm run tooling:test && node scripts/check-consumer.mjs --external",
+    "lint:fix": "eslint . --fix --max-warnings 0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "eslint": "10.10.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.12.0",
+    "happy-dom": "^20.10.6",
+    "prettier": "3.9.8",
+    "sass": "^1.101.0",
+    "tailwindcss": "^4.3.1",
+    "typescript": "6.0.3",
+    "typescript-5-5": "npm:typescript@5.5.4",
+    "typescript-5-9": "npm:typescript@5.9.3",
+    "typescript-eslint": "8.70.0",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "fsevents@2.3.3": true
+  },
+  "description": "Lightweight browser scroll progress tracking with geometric ranges, subscriptions and optional debug tools.",
+  "keywords": [
+    "scroll",
+    "progress",
+    "typescript",
+    "browser",
+    "animation",
+    "intersection-observer"
+  ]
+}

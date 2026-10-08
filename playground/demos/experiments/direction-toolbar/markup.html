@@ -1,0 +1,145 @@
+<div class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.2em] text-amber-300">Physical intent</p>
+  <h2 class="mt-3 text-4xl font-semibold tracking-tight">Bring reading controls back on return</h2>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> compare physical
+      <code>scrollDirection</code> with exposed <code>progressDirection</code>.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> start in Normal, scroll down and back, then
+      enable inversion and repeat.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> the toolbar follows physical movement; the
+      progress direction reverses only when inversion is enabled. The table highlights the current
+      combination.
+    </p>
+  </div>
+</div>
+<div
+  class="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]"
+>
+  <div
+    data-experiment-target="direction"
+    data-toolbar-visible="true"
+    class="relative min-h-[50rem] min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-stone-100 p-4 text-stone-900 sm:p-8"
+  >
+    <div
+      data-direction-toolbar
+      class="direction-toolbar sticky top-4 z-10 flex items-center justify-between rounded-full bg-stone-950 px-5 py-3 text-sm text-white shadow-xl"
+    >
+      <span>Field journal</span><span>Contents · Save</span>
+    </div>
+    <div class="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-between gap-4">
+      <label class="inline-flex cursor-pointer items-center gap-3 text-sm font-medium">
+        <input type="checkbox" data-direction-inverted class="size-4 accent-stone-950" />
+        Invert exposed progress
+      </label>
+      <span
+        data-direction-mode
+        class="rounded-full bg-amber-200 px-3 py-1.5 text-xs font-medium text-amber-950"
+        >Normal · geometric progress</span
+      >
+    </div>
+    <article class="mx-auto mt-12 max-w-2xl">
+      <p class="text-xs uppercase tracking-[0.2em] text-stone-500">Direction fixture</p>
+      <h3 class="mt-4 text-4xl font-semibold">Scroll down, then reverse direction.</h3>
+      <div class="mt-8 space-y-5 text-lg leading-8 text-stone-600">
+        <p>
+          Moving forward hides the toolbar. Moving backward shows it again using physical
+          <code>scrollDirection</code>.
+        </p>
+        <p>
+          The bar uses exposed progress. Enable inversion to make its value move in the opposite
+          direction from the physical scroll.
+        </p>
+      </div>
+    </article>
+    <div class="mx-auto mt-14 max-w-2xl rounded-2xl bg-stone-200 p-5">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.16em] text-stone-500">Exposed progress</p>
+          <p data-direction-value class="mt-1 font-mono text-2xl font-semibold">0%</p>
+        </div>
+      </div>
+      <div class="mt-3 h-2 overflow-hidden rounded-full bg-stone-300">
+        <div
+          data-direction-fill
+          class="h-full origin-left rounded-full bg-amber-500 transition-transform duration-100"
+          style="transform: scaleX(0)"
+        ></div>
+      </div>
+      <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-xl bg-white/70 p-4">
+          <dt class="text-xs text-stone-500"><code>scrollDirection</code> · physical movement</dt>
+          <dd data-direction-physical class="mt-1 font-mono font-semibold">none</dd>
+          <dd data-direction-toolbar-action class="mt-2 text-xs text-stone-600">
+            keep controls visible
+          </dd>
+        </div>
+        <div class="rounded-xl bg-white/70 p-4">
+          <dt class="text-xs text-stone-500"><code>progressDirection</code> · exposed value</dt>
+          <dd data-direction-progress class="mt-1 font-mono font-semibold">none</dd>
+          <dd data-direction-progress-action class="mt-2 text-xs text-stone-600">
+            exposed value is unchanged
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+  <aside class="rounded-3xl border border-white/10 bg-black/25 p-6">
+    <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+      Expected directions
+    </p>
+    <div class="mt-6 overflow-x-auto">
+      <table class="w-full text-left text-xs leading-5 text-neutral-400">
+        <thead class="text-neutral-500">
+          <tr>
+            <th class="pb-2 pr-3 font-medium">Movement</th>
+            <th class="pb-2 pr-3 font-medium">scroll</th>
+            <th class="pb-2 font-medium">progress</th>
+          </tr>
+        </thead>
+        <tbody class="font-mono">
+          <tr
+            data-direction-expectation="normal-forward"
+            data-active="true"
+            class="border-t border-white/10 transition data-[active=true]:bg-amber-300/10 data-[active=true]:text-amber-200"
+          >
+            <td class="py-2 pr-3 font-sans">down · normal</td>
+            <td class="py-2 pr-3">forward</td>
+            <td class="py-2">forward</td>
+          </tr>
+          <tr
+            data-direction-expectation="normal-backward"
+            data-active="false"
+            class="border-t border-white/10 transition data-[active=true]:bg-amber-300/10 data-[active=true]:text-amber-200"
+          >
+            <td class="py-2 pr-3 font-sans">up · normal</td>
+            <td class="py-2 pr-3">backward</td>
+            <td class="py-2">backward</td>
+          </tr>
+          <tr
+            data-direction-expectation="inverted-forward"
+            data-active="false"
+            class="border-t border-white/10 transition data-[active=true]:bg-amber-300/10 data-[active=true]:text-amber-200"
+          >
+            <td class="py-2 pr-3 font-sans">down · inverted</td>
+            <td class="py-2 pr-3">forward</td>
+            <td class="py-2">backward</td>
+          </tr>
+          <tr
+            data-direction-expectation="inverted-backward"
+            data-active="false"
+            class="border-t border-white/10 transition data-[active=true]:bg-amber-300/10 data-[active=true]:text-amber-200"
+          >
+            <td class="py-2 pr-3 font-sans">up · inverted</td>
+            <td class="py-2 pr-3">backward</td>
+            <td class="py-2">forward</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </aside>
+</div>

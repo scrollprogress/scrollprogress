@@ -1,0 +1,32 @@
+<div
+  data-core-target="progress-bar"
+  class="min-h-96 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-cyan-300/50"
+>
+  <p class="text-base font-semibold text-cyan-300">Progress callback · <code>onUpdate</code></p>
+  <h3 class="mt-3 text-3xl font-semibold">Map progress to a transform</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p><strong class="text-neutral-200">Check:</strong> map progress to a CSS transform.</p>
+    <p><strong class="text-neutral-200">Try:</strong> scroll past this card.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> the bar fills from 0 to 1 using
+      <code>start: 0.9</code> and <code>end: 0.2</code>.
+    </p>
+  </div>
+  <div class="mt-12 h-3 overflow-hidden rounded-full bg-white/10">
+    <div data-progress-fill class="h-full w-full origin-left bg-cyan-300"></div>
+  </div>
+  <dl class="mt-8 grid grid-cols-3 gap-3 text-sm">
+    <div>
+      <dt class="text-neutral-500">Progress</dt>
+      <dd><output data-demo-progress="progress-bar">0.000</output></dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500">Tracking</dt>
+      <dd data-demo-tracking="progress-bar">idle</dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500">Direction</dt>
+      <dd data-demo-direction="progress-bar">none</dd>
+    </div>
+  </dl>
+</div>

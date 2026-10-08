@@ -1,0 +1,24 @@
+.scroll-progress-debug-overlay {
+    --sp-debug-overlay-z-index: 999998;
+
+    --sp-debug-overlay-target-color: rgba(250, 204, 21, 0.95);
+    --sp-debug-overlay-progress-start-color: #00ff88;
+    --sp-debug-overlay-progress-end-color: #ff6644;
+    --sp-debug-overlay-root-color: rgba(96, 165, 250, 0.95);
+    --sp-debug-overlay-margin-color: rgba(168, 85, 247, 0.95);
+    --sp-debug-overlay-intersection-color: rgba(248, 113, 113, 0.95);
+
+    --sp-debug-overlay-line-width: 1px;
+
+    --sp-debug-overlay-label-text: #020617;
+    --sp-debug-overlay-target-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-progress-start-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-progress-end-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-root-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-margin-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-intersection-label-text: var(--sp-debug-overlay-label-text);
+    --sp-debug-overlay-label-font-size: 10px;
+    --sp-debug-overlay-label-padding: 1px 5px;
+    --sp-debug-overlay-label-radius: 5px;
+    --sp-debug-overlay-label-offset: 0px;
+}

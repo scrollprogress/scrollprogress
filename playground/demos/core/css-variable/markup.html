@@ -1,0 +1,41 @@
+<div
+  data-core-target="css-var"
+  style="--demo-progress: 0"
+  class="min-h-96 rounded-3xl border border-white/10 bg-white/3 p-8 transition data-[scroll-active=true]:border-sky-300/50"
+>
+  <p class="text-base font-semibold text-sky-300">CSS custom property · <code>cssVar</code></p>
+  <h3 class="mt-3 text-3xl font-semibold">Let descendants consume progress</h3>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> publish progress as
+      <code>--demo-progress</code>.
+    </p>
+    <p><strong class="text-neutral-200">Try:</strong> scroll past this card.</p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> CSS scales the square while the live state
+      updates.
+    </p>
+  </div>
+  <div class="mt-12 grid place-items-center rounded-3xl border border-white/10 bg-black/20 p-8">
+    <div
+      data-css-var-visual
+      class="grid size-40 place-items-center rounded-3xl border border-sky-300/40 bg-sky-300/10 font-mono text-sky-100 transition-transform"
+    >
+      CSS only
+    </div>
+  </div>
+  <dl class="mt-8 grid grid-cols-3 gap-3 text-sm">
+    <div>
+      <dt class="text-neutral-500">Progress</dt>
+      <dd><output data-demo-progress="css-var">0.000</output></dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500">Tracking</dt>
+      <dd data-demo-tracking="css-var">idle</dd>
+    </div>
+    <div>
+      <dt class="text-neutral-500">Direction</dt>
+      <dd data-demo-direction="css-var">none</dd>
+    </div>
+  </dl>
+</div>

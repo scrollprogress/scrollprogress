@@ -1,0 +1,125 @@
+<section class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.24em] text-fuchsia-300">Debug lab</p>
+  <h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-6xl">
+    Inspect every debug surface from one page.
+  </h1>
+  <div class="mt-6 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> inspect registry state through the palette,
+      overlay and browser console.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> scroll the page, then use the scroll container
+      (<code>root</code>) and change the controls in the debug palette.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> all surfaces stay synchronized across ten
+      trackers. Repeated defaults intentionally test a long registry and color assignment.
+    </p>
+    <div class="demo-action-row" data-demo-actions="debug/lab"></div>
+  </div>
+</section>
+
+<section class="mt-20 space-y-24" aria-label="Debug palette trackers">
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-fuchsia-300/30 bg-fuchsia-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-fuchsia-300">Tracker 01 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport A</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+  <article
+    data-debug-target
+    data-debug-inverted
+    class="min-h-96 rounded-3xl border border-violet-300/30 bg-violet-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-violet-300">Tracker 02 · inverted</p>
+    <h2 class="mt-3 text-3xl font-semibold">Inverted viewport</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null, inverted: true }</p>
+  </article>
+  <article
+    data-debug-target
+    data-debug-once
+    data-debug-thresholds
+    class="min-h-96 rounded-3xl border border-blue-300/30 bg-blue-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-blue-300">Tracker 03 · once + thresholds</p>
+    <h2 class="mt-3 text-3xl font-semibold">Once with dense thresholds</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">
+      { root: null, once: true, observerThreshold: dense }
+    </p>
+  </article>
+  <div
+    id="debug-scroll-root"
+    data-debug-root
+    data-scroll-region
+    tabindex="0"
+    role="region"
+    aria-label="Debug scroll container"
+    class="h-96 overflow-y-auto rounded-3xl border border-cyan-300/30 bg-cyan-950/20 p-6"
+  >
+    <div class="flex min-h-[52rem] items-center py-48">
+      <article
+        data-debug-target
+        class="min-h-80 w-full rounded-3xl border border-cyan-300/40 bg-cyan-300/10 p-8"
+      >
+        <p class="text-sm font-medium text-cyan-300">Tracker 04 · custom root</p>
+        <h2 class="mt-3 text-3xl font-semibold">Vertical custom root</h2>
+        <p class="mt-4 font-mono text-sm text-neutral-400">{ root: #debug-scroll-root }</p>
+        <p class="mt-4 text-sm text-neutral-400">
+          Scroll this container, then enable <code>Clip target overlay to custom root</code>.
+        </p>
+      </article>
+    </div>
+  </div>
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-emerald-300/30 bg-emerald-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-emerald-300">Tracker 05 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport B</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-lime-300/30 bg-lime-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-lime-300">Tracker 06 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport C</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-yellow-300/30 bg-yellow-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-yellow-300">Tracker 07 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport D</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+  <article
+    data-debug-target
+    data-debug-thresholds
+    class="min-h-96 rounded-3xl border border-orange-300/30 bg-orange-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-orange-300">Tracker 08 · thresholds</p>
+    <h2 class="mt-3 text-3xl font-semibold">Dense observer thresholds</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null, observerThreshold: dense }</p>
+  </article>
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-rose-300/30 bg-rose-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-rose-300">Tracker 09 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport E</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+  <article
+    data-debug-target
+    class="min-h-96 rounded-3xl border border-pink-300/30 bg-pink-300/5 p-8"
+  >
+    <p class="text-sm font-medium text-pink-300">Tracker 10 · default options</p>
+    <h2 class="mt-3 text-3xl font-semibold">Default viewport F</h2>
+    <p class="mt-4 font-mono text-sm text-neutral-400">{ root: null }</p>
+  </article>
+</section>

@@ -1,0 +1,111 @@
+<div class="max-w-3xl">
+  <p class="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+    Observation-driven async
+  </p>
+  <h2 class="mt-3 text-4xl font-semibold tracking-tight">
+    Append two local JSON pages from one moving sentinel
+  </h2>
+  <div class="mt-4 max-w-2xl space-y-2 text-sm leading-6 text-neutral-400">
+    <p>
+      <strong class="text-neutral-200">Check:</strong> use one moving sentinel to request and append
+      two local JSON pages.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Try:</strong> reach the sentinel twice, then use Reset to
+      replay the sequence.
+    </p>
+    <p>
+      <strong class="text-neutral-200">Expect:</strong> each entry starts one request;
+      <code>next: null</code> releases the tracker after page 2.
+    </p>
+  </div>
+</div>
+
+<div
+  class="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]"
+>
+  <div class="min-w-0 rounded-3xl border border-emerald-300/15 bg-emerald-950/20 p-4 sm:p-5">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-sm text-emerald-200">Local reading list</p>
+        <output data-minimal-json-count class="mt-1 block font-mono text-xs text-neutral-500"
+          >0 / 2 pages · 0 posts</output
+        >
+      </div>
+      <p class="text-xs text-neutral-400" aria-live="polite" aria-atomic="true">
+        Status:
+        <strong data-minimal-json-status class="font-medium text-white"
+          >waiting for sentinel</strong
+        >
+      </p>
+    </div>
+    <div
+      data-experiment-root="minimal-json"
+      data-scroll-region
+      tabindex="0"
+      role="region"
+      aria-label="Local JSON feed preview"
+      class="h-[30rem] overflow-y-auto overscroll-y-contain rounded-2xl border border-white/10 bg-neutral-950 p-4"
+    >
+      <div data-minimal-json-list class="space-y-3">
+        <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p class="text-xs uppercase tracking-[0.16em] text-neutral-500">Already rendered</p>
+          <h4 class="mt-2 text-xl font-semibold">Existing item 01</h4>
+          <p class="mt-3 text-sm leading-6 text-neutral-400">
+            Existing content creates enough distance for the sentinel to begin outside its
+            observation area.
+          </p>
+        </article>
+        <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p class="text-xs uppercase tracking-[0.16em] text-neutral-500">Already rendered</p>
+          <h4 class="mt-2 text-xl font-semibold">Existing item 02</h4>
+          <p class="mt-3 text-sm leading-6 text-neutral-400">
+            Nothing is requested until the reader approaches the end of this short list.
+          </p>
+        </article>
+      </div>
+      <div class="grid min-h-80 place-items-center px-5 text-center text-xs text-neutral-600">
+        Keep scrolling · observation begins 80px before the sentinel is visible
+      </div>
+      <div
+        data-minimal-json-sentinel
+        data-state="idle"
+        class="rounded-2xl border border-dashed border-emerald-300/25 p-5 text-center text-sm text-neutral-400 data-[state=complete]:border-emerald-300/50 data-[state=complete]:text-emerald-100 data-[state=error]:border-rose-300/40 data-[state=error]:text-rose-200 data-[state=loading]:animate-pulse data-[state=loading]:border-emerald-300/50 data-[state=loading]:text-emerald-100 data-[state=ready]:border-emerald-300/40 data-[state=ready]:text-emerald-200 motion-reduce:data-[state=loading]:animate-none"
+      >
+        <span data-minimal-json-sentinel-label>Sentinel · approach to request page 1</span>
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        data-minimal-json-retry
+        hidden
+        class="rounded-full bg-emerald-200 px-4 py-2 text-sm font-medium text-emerald-950 hover:bg-emerald-100 disabled:opacity-40"
+      >
+        Retry JSON request
+      </button>
+      <button
+        type="button"
+        data-minimal-json-reset
+        class="rounded-full border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
+      >
+        Reset demo
+      </button>
+      <p class="text-xs text-neutral-600">Reset is playground-only replay scaffolding.</p>
+    </div>
+  </div>
+  <aside class="min-w-0 self-start rounded-3xl border border-white/10 bg-black/25 p-6">
+    <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Expected sequence</p>
+    <ol class="mt-4 space-y-3 text-sm leading-6 text-neutral-400">
+      <li><strong class="text-white">1.</strong> Each entry starts at most one request.</li>
+      <li><strong class="text-white">2.</strong> Each append moves the sentinel forward.</li>
+      <li>
+        <strong class="text-white">3.</strong> <code>next: null</code> destroys the tracker after
+        page 2.
+      </li>
+    </ol>
+    <p class="mt-5 text-sm leading-6 text-neutral-500">
+      JSON strings are assigned with <code>textContent</code>, never interpreted as HTML.
+    </p>
+  </aside>
+</div>
