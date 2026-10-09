@@ -8,6 +8,11 @@ are ordinary CSS files: importing one makes its rules available, while the
 The option does not resolve a file name, load a stylesheet, or start a network
 request. Import the CSS before constructing the debug view.
 
+A `theme` name with no matching CSS still adds the data attribute, but the view
+effectively continues to show its embedded default values. Importing an external
+theme does not prevent the palette or overlay from inserting its own embedded
+`<style>` element.
+
 The examples assume a bundler that supports CSS imports. Without one, copy the
 theme file into the application's stylesheet pipeline instead.
 
@@ -15,8 +20,8 @@ The JavaScript examples also compile unchanged as TypeScript.
 
 ## Theme a debug session
 
-Session options are forwarded to the palette and overlay factories, so the common
-case can configure both views in one place:
+Session options are forwarded separately to the palette and overlay factories, so
+the common case can configure both views during session construction:
 
 ```js
 import { trackScrollProgress } from '@scrollprogress/scrollprogress';
@@ -42,8 +47,14 @@ function cleanup() {
 }
 ```
 
-Use the individual factories in the following examples when the two views need
-independent lifecycles or direct controller access.
+The session has no shared `theme` option. Pass view options through `palette` and
+`overlay`; they can use the same theme, different themes or their embedded
+defaults. Use the session form when both tools can share one lifecycle through
+`debug.destroy()`.
+
+The examples below use the individual factories to expose separate controllers.
+Choose that form when palette and overlay must be destroyed or recreated
+independently, as shown in [Runtime behavior](#runtime-behavior).
 
 ## Optional themes
 
@@ -169,8 +180,10 @@ all other overlay styling under the selected theme.
 
 The `className` option remains available for general application hooks. Theme
 rules should use the documented root class together with the theme data attribute,
-as shown above, so they reliably override the embedded defaults regardless of
-stylesheet order.
+as shown above. Those selectors are more specific than the embedded default
+selectors, so ordinary theme declarations do not depend on stylesheet order. This
+is not an absolute cascade guarantee in the presence of `!important`, cascade
+layers or more-specific application overrides.
 
 ## Runtime behavior
 
@@ -178,3 +191,36 @@ Themes are selected only during construction. Controllers do not expose a theme
 registry, dynamic stylesheet loader or `setTheme()` method. To choose another
 theme, destroy and recreate the individual debug view or its owning session with
 another imported theme name.
+
+Keep tracker registration in a session and manage a view independently when only
+that view needs to change theme:
+
+```js
+import { trackScrollProgress } from '@scrollprogress/scrollprogress';
+import { createScrollProgressDebugger } from '@scrollprogress/scrollprogress/debug/session';
+import { createDebugOverlay } from '@scrollprogress/scrollprogress/debug/overlay';
+import '@scrollprogress/scrollprogress/debug/themes/neon-grid.css';
+import '@scrollprogress/scrollprogress/debug/themes/paper.css';
+
+const target = document.querySelector('[data-scroll-target]');
+
+if (!(target instanceof HTMLElement)) {
+    throw new Error('Missing scroll target');
+}
+
+const tracker = trackScrollProgress(target);
+const session = createScrollProgressDebugger(tracker);
+let overlay = createDebugOverlay({ theme: 'neon-grid' });
+
+overlay.destroy();
+overlay = createDebugOverlay({ theme: 'paper' });
+
+function cleanup() {
+    overlay.destroy();
+    session.destroy();
+    tracker.destroy();
+}
+```
+
+Recreating the overlay leaves the session's tracker registrations in place. The
+same ownership pattern works with an independently created palette.

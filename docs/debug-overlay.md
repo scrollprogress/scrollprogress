@@ -72,7 +72,8 @@ function cleanup() {
 
 The palette is optional. The overlay reads the selected item directly from the
 shared debug registry. It can be the only registry view, or it can run alongside
-the palette, console logger or a custom registry consumer.
+the palette, console logger or a custom registry consumer. It may also be created
+before any items are registered.
 
 ## Options
 
@@ -85,6 +86,53 @@ the palette, console logger or a custom registry consumer.
 | `clipTargetToRoot` | `false`                  | Clip the target layer to a custom root rectangle |
 | `colors`           | —                        | Partial color overrides                          |
 | `labelPlacements`  | —                        | Partial placement overrides for overlay labels   |
+
+The `target` option controls DOM ownership, not the overlay's coordinate space.
+The overlay remains fixed to viewport coordinates even when it is appended to a
+custom target. A custom mount can keep development tooling inside an
+application-owned portal, micro-frontend boundary, preview host, or dedicated
+debug container instead of adding it directly to `document.body`.
+
+`document.body` is the recommended mount. With a custom `target`, a transformed
+ancestor can establish a different containing block for the overlay's
+`position: fixed` geometry. Container overflow, clipping, and stacking contexts
+can also constrain the overlay or prevent its z-index from escaping that context.
+
+For example, this mount changes the fixed-position reference and clips anything
+outside its 300-pixel box:
+
+```html
+<div id="debug-mount"></div>
+```
+
+```css
+#debug-mount {
+    height: 300px;
+    overflow: hidden;
+    transform: translateZ(0);
+}
+```
+
+```js
+const mount = document.querySelector('#debug-mount');
+
+if (!(mount instanceof HTMLElement)) {
+    throw new Error('Missing debug mount');
+}
+
+const overlay = createDebugOverlay({
+    target: mount
+});
+
+function cleanup() {
+    overlay.destroy();
+}
+```
+
+The transform can make the overlay's fixed geometry relative to `debug-mount`
+instead of the viewport. `overflow: hidden` can then clip it, while the resulting
+stacking context can keep its z-index below content outside the mount. Use a custom
+target only when those layout effects are intentional or otherwise controlled.
 
 ## Layers
 
@@ -223,7 +271,48 @@ const overlay = createDebugOverlay({
 There is no vertical `center` position. Horizontal centering is supported.
 
 Partial placements are merged with the default placement for that label. Invalid
-runtime values are ignored and fall back to the supported defaults.
+runtime values fall back independently for `mode`, `vertical`, and `horizontal`,
+not for the entire placement object.
+
+## JavaScript runtime validation
+
+TypeScript normally rejects unknown layer names, color IDs, and placement values.
+JavaScript or dynamically loaded configuration can still supply them. The
+following example is intentionally outside the typed contract:
+
+```js
+const overlay = createDebugOverlay({
+    visibleLayers: ['target', 'unknown-layer'],
+    colors: {
+        unknown: {
+            color: 'red'
+        }
+    },
+    labelPlacements: {
+        target: {
+            mode: 'external',
+            vertical: 'middle',
+            horizontal: 'center'
+        }
+    }
+});
+
+function cleanup() {
+    overlay.destroy();
+}
+```
+
+| Input                  | Runtime result                                     |
+| ---------------------- | -------------------------------------------------- |
+| `'unknown-layer'`      | Does not make an additional layer visible          |
+| Color ID `unknown`     | Ignored                                            |
+| `mode: 'external'`     | Preserved because it is valid                      |
+| `vertical: 'middle'`   | Falls back to the target label's default (`'top'`) |
+| `horizontal: 'center'` | Preserved because it is valid                      |
+
+Placement fallback is applied per field, not to the complete placement object.
+Color values for known IDs are assigned as CSS values and left to the browser for
+validation.
 
 ## Centered margin-label collision handling
 
@@ -302,6 +391,41 @@ The palette exposes a footer control for toggling this behavior when a custom ro
 
 The overlay follows the item selected in the shared debug registry.
 
+With an empty registry or a `null` selection, the overlay remains mounted but
+clears and hides its geometry. Registering the next first item selects it
+automatically and makes geometry visible again.
+
+### Detached targets
+
+Removing the selected target from the DOM only detaches that `HTMLElement`; it
+does not destroy the JavaScript object. The same element can be moved between
+containers or inserted again, including during transitions, framework updates,
+and temporary detach-and-reattach operations. ScrollProgress therefore does not
+treat `element.isConnected === false` as a terminal lifecycle event. Automatically
+destroying the tracker at the first disconnection would make a valid reinsertion
+irreversible.
+
+Choose cleanup according to what the application does next:
+
+- when the same element will be reinserted, keep its tracker;
+- when removal is permanent, destroy the tracker so its observers and references
+  are released and its ordinary bridge item leaves the registry;
+- when the application creates a clone or replacement element, destroy the old
+  tracker and create a new tracker for the new element.
+
+For a component that permanently removes its tracked target:
+
+```js
+function cleanup() {
+    tracker.destroy();
+    target.remove();
+}
+```
+
+The tracker retains the original element identity and never transfers tracking to
+a clone or replacement automatically. Completed `once` snapshots remain subject
+to their documented [bridge lifecycle](debug.md#connect-a-tracker-manually).
+
 It synchronizes after:
 
 - registry selection changes;
@@ -314,6 +438,26 @@ It synchronizes after:
 - item unregistration.
 
 Updates are coalesced through `requestAnimationFrame`.
+
+## Multiple overlays
+
+Multiple overlays can share the registry as an advanced visual-comparison setup.
+They all follow the same selected item; they do not provide independent tracker
+selection. When mounted in the same target, they draw against the same geometry
+and their layers and labels can overlap. Different colors, visible layers, label
+placements, themes, clipping settings or mount targets can distinguish them.
+
+This can be useful while comparing:
+
+- themes or color configurations;
+- label placements;
+- target clipping enabled and disabled;
+- layer combinations;
+- behavior under different mount layouts.
+
+Each overlay registers its own `Overlays` group in the palette, and that group
+changes only the layer and clipping state of the overlay that created it. Prefer a
+single overlay for ordinary debugging.
 
 ## Cleanup
 

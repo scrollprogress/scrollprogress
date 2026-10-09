@@ -4,10 +4,107 @@ Install `@scrollprogress/scrollprogress@rc`, then use these examples in a browse
 application with a bundler. Each recipe is independent and includes the cleanup
 owned by that example.
 
+`tracker.destroy()` releases ScrollProgress observers, listeners, callbacks, and
+scheduled work. It does not restore inline styles, ARIA attributes, or other
+application effects written by callbacks; each component must clean up the values
+it owns.
+
 The examples use syntax shared by JavaScript and TypeScript. Runtime
 `instanceof HTMLElement` checks also give TypeScript the narrowing it needs.
 
-## Progress bar
+## Progress bars
+
+A progress bar can represent different movements. Choose the range according to
+what the application needs to measure:
+
+| Recipe           | Measurement                                  | Typical range                      |
+| ---------------- | -------------------------------------------- | ---------------------------------- |
+| Element progress | One element moving through the viewport      | `start > end`, such as `0.8 → 0.2` |
+| Reading progress | Available scroll distance along tall content | `0 → 1`                            |
+
+### Element progress bar
+
+This version fills while a section crosses the viewport.
+
+```html
+<div class="spacer"></div>
+<section id="progress-section">
+    <div
+        id="section-progress"
+        role="progressbar"
+        aria-label="Section progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+    >
+        <span class="fill"></span>
+    </div>
+    <p>Tracked section</p>
+</section>
+<div class="spacer"></div>
+```
+
+```css
+.spacer {
+    height: 100vh;
+}
+
+#section-progress {
+    height: 4px;
+    overflow: hidden;
+    background: lightgray;
+}
+
+#section-progress .fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+}
+```
+
+```js
+import { trackScrollProgress } from '@scrollprogress/scrollprogress';
+
+const section = document.querySelector('#progress-section');
+const bar = document.querySelector('#section-progress');
+const fill = bar?.querySelector('.fill');
+
+if (
+    !(section instanceof HTMLElement) ||
+    !(bar instanceof HTMLElement) ||
+    !(fill instanceof HTMLElement)
+) {
+    throw new Error('Missing section progress elements');
+}
+
+const tracker = trackScrollProgress(section, {
+    start: 0.8,
+    end: 0.2,
+    onUpdate({ progress }) {
+        fill.style.transform = `scaleX(${progress})`;
+        bar.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+    }
+});
+
+function cleanup() {
+    tracker.destroy();
+    fill.style.removeProperty('transform');
+    bar.setAttribute('aria-valuenow', '0');
+}
+```
+
+The range starts when the section's top reaches 80% of the viewport and ends when
+its bottom reaches 20%. The bar is a child of the measured section, but only its
+fill is transformed, so the section's measured geometry remains stable.
+
+### Reading progress bar
+
+> **Range warning:** this recipe intentionally uses `start <= end`, so the tracker
+> prints its configuration warning once. The story must be taller than the
+> viewport for this range to have a positive travel distance.
 
 ```html
 <div
@@ -62,13 +159,13 @@ const tracker = trackScrollProgress(story, {
 
 function cleanup() {
     tracker.destroy();
+    bar.style.removeProperty('transform');
+    bar.setAttribute('aria-valuenow', '0');
 }
 ```
 
 This range measures from the story's top reaching the viewport top to its bottom
-reaching the viewport bottom. It intentionally uses `start <= end`, so the tracker
-prints the range warning once. The story must be taller than the viewport for this
-range to have a positive travel distance.
+reaching the viewport bottom.
 
 ## Reveal while scrolling
 
@@ -100,22 +197,27 @@ if (!(target instanceof HTMLElement) || !(content instanceof HTMLElement)) {
     throw new Error('Missing reveal elements');
 }
 
+const revealOffset = 24;
+
 const tracker = trackScrollProgress(target, {
     onUpdate({ progress }) {
         content.style.opacity = String(progress);
-        content.style.transform = `translateY(${24 * (1 - progress)}px)`;
+        content.style.transform = `translateY(${revealOffset * (1 - progress)}px)`;
     }
 });
 
 function cleanup() {
     tracker.destroy();
+    content.style.removeProperty('opacity');
+    content.style.removeProperty('transform');
 }
 ```
 
-The transform belongs to the child, so it does not move the element whose geometry
-is being measured. Add `once: true` if the reveal should stop after its first
-completed cycle. The reduced-motion rule removes the moving transform while
-preserving the opacity feedback.
+`revealOffset` is the application's maximum visual displacement in pixels, not a
+ScrollProgress setting. The transform belongs to the child, so it does not move
+the element whose geometry is being measured. Add `once: true` if the reveal
+should stop after its first completed cycle. The reduced-motion rule removes the
+moving transform while preserving the opacity feedback.
 
 ## CSS custom property
 
@@ -282,13 +384,22 @@ const tracker = trackScrollProgress(target, {
 function cleanup() {
     // Safe even when `once` has already completed and destroyed the tracker.
     tracker.destroy();
+    // Remove this line when the final inline opacity should remain.
+    target.style.removeProperty('opacity');
 }
 ```
 
 Completion requires the tracker to enter active tracking first. The final update is
-delivered before automatic cleanup.
+delivered before automatic cleanup. This teardown restores the component's prior
+opacity cascade; omit that application cleanup when the component should preserve
+the final inline value.
 
 ## Read progress once
+
+`readScrollProgress()` is a snapshot API: it measures the current geometry and
+returns one number that is not kept up to date. Use it when an existing user
+action, diagnostic command or application-owned render loop needs the value at a
+specific moment.
 
 ```js
 import { readScrollProgress } from '@scrollprogress/scrollprogress';
@@ -307,13 +418,28 @@ const progress = readScrollProgress(target, {
 console.log(progress);
 ```
 
-This creates no observers or cleanup. Use a tracker instead when the value must
-stay synchronized during scrolling.
+This creates no observers or cleanup and does not provide tracking state,
+directions or lifecycle events. Do not pair it with a new unthrottled scroll
+listener; use a tracker when ScrollProgress should keep the value synchronized.
+See [read progress on demand](api.md#read-progress-on-demand) for a complete button
+and output example.
 
 ## Web Animations
 
-Use the reveal recipe's HTML and CSS in a browser that supports the Web Animations
-API:
+The Web Animations API is the browser feature exposed through `Element.animate()`.
+It is not provided or polyfilled by ScrollProgress, so verify support for the
+browsers targeted by the application.
+
+Use the reveal recipe's HTML and include this reduced-motion rule with the recipe;
+copying only the JavaScript does not provide that protection:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+    #reveal .content {
+        transform: none !important;
+    }
+}
+```
 
 ```js
 import { trackScrollProgress } from '@scrollprogress/scrollprogress';
@@ -323,6 +449,10 @@ const content = target?.querySelector('.content');
 
 if (!(target instanceof HTMLElement) || !(content instanceof HTMLElement)) {
     throw new Error('Missing animation elements');
+}
+
+if (typeof content.animate !== 'function') {
+    throw new Error('Web Animations API is not supported');
 }
 
 const animation = content.animate(
