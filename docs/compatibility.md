@@ -29,8 +29,10 @@ and the browser APIs described below.
 | `console.table`         | Required only while the console logger is active |
 
 Without `ResizeObserver`, viewport resize, active scrolling, intersection changes
-and explicit `tracker.update({})` still synchronize state. Call `update({})` after
-target-only or custom-root-only size changes that do not produce another event.
+and explicit `tracker.update({})` still synchronize state. Size changes caused by
+images, fonts, dynamic content, or resizing a custom root are not detected
+automatically unless they also cause scroll, viewport resize, intersection, or an
+explicit `tracker.update({})`. Call `update({})` after an otherwise silent change.
 
 Optional debug views use additional browser features:
 
@@ -44,8 +46,10 @@ These APIs are not required by the core tracker or `readScrollProgress()`.
 
 ## DOM and document boundaries
 
-Targets and custom roots must belong to the current document. Cross-document and
-same-origin iframe coordination are not supported in RC1.
+Targets, element roots, and an explicit `Document` root must belong to or be the
+current `document`. External documents and iframe documents remain outside the
+supported contract; cross-document and same-origin iframe coordination are not
+supported in RC1.
 
 The supported custom root is an untransformed scrolling ancestor of the target.
 Scaled or rotated roots, arbitrary clipping shapes and visual-viewport compensation
@@ -56,11 +60,21 @@ which can vary on mobile. Prefer a custom horizontal root for component-level us
 
 ## Server-side imports
 
-Importing the built entry points without `window` or `document` is supported. The
-modules do not create DOM at import time.
+Importing the JavaScript entry points without `window` or `document` is supported.
+The modules do not create DOM at import time.
 
 Constructing trackers, reading geometry, or creating debug views requires browser
 globals. ScrollProgress does not provide an operational server-side tracker.
+
+SSR applications may import ScrollProgress modules during server rendering, but
+trackers, geometry reads, palettes, and overlays must be created in a client-only
+lifecycle after the document is available. Importing `createDebugPalette()` or
+`createDebugOverlay()` is server-safe; calling either factory during server
+rendering is not.
+
+Theme CSS is separate from this JavaScript import guarantee. CSS imports require
+support from the application's bundler or stylesheet pipeline and may need to be
+loaded only by client-side code.
 
 ## TypeScript
 
@@ -91,10 +105,17 @@ with the configured threshold.
 Percentage root margins follow native `IntersectionObserver` behavior and are
 resolved against the root width, including top and bottom margins.
 
-## Debug limitations
+## Content security policy and debug limitations
 
-- Palette and overlay insert an embedded `<style>` element when constructed. The
-  application's content security policy must allow it; RC1 has no nonce option.
+Palette and overlay insert an embedded `<style>` element when constructed, so the
+policy for style elements must allow it. They also apply runtime styles to
+elements for geometry, palette dragging, color overrides, and indicators; the CSP
+must permit those style attributes as well. Importing an external theme does not
+replace or suppress the embedded style element. The current constructors provide
+no nonce option.
+
+Other debug limitations:
+
 - Overlay geometry is a rectangular diagnostic approximation. Native
   `IntersectionObserver` remains authoritative for tracking flags.
 - Drag positioning in the palette has no keyboard equivalent in RC1.

@@ -51,9 +51,10 @@ are resolved against the root width.
 
 Finite values outside `0`–`1` are allowed. Most element-entry effects use
 `start > end`. `start <= end` can be intentional for a target larger than its root,
-such as a page-length progress bar, but the tracker warns once because the same
-range can become degenerate for shorter targets. Use `inverted` to reverse the
-exposed value without changing this geometry.
+such as a [page-length progress bar](recipes.md#reading-progress-bar), but the
+tracker warns once because the same range can become degenerate for shorter
+targets. Use `inverted` to reverse the exposed value without changing this
+geometry.
 
 ## Receive updates
 
@@ -90,8 +91,9 @@ Progress geometry and observation answer different questions. A target can be in
 the observation area while its progress is still `0`, or have positive progress
 before the observer reports it as intersecting.
 
-The initial geometry is read synchronously. The first `IntersectionObserver`
-notification arrives later, so the initial state uses:
+Successful construction reads geometry and produces the first state synchronously.
+The first `IntersectionObserver` notification arrives later, so that initial state
+uses:
 
 ```text
 {
@@ -100,6 +102,13 @@ notification arrives later, so the initial state uses:
     isTracking: false
 }
 ```
+
+`getState()` therefore returns a state immediately after construction. It can
+temporarily return `null` after `update()` changes `root` or
+`requireRootVisible`, while the replacement state is waiting for the next
+animation frame. A subscriber added during that interval starts listening but is
+not called immediately. See [`getState()` in the API reference](api.md#getstate)
+for the precise contract.
 
 ## Subscribe to state
 
@@ -117,6 +126,11 @@ unsubscribe();
 
 A new subscriber immediately receives the latest available state. The returned
 unsubscribe function is safe to call more than once.
+
+State types are `readonly`, but their objects are not frozen at runtime. Treat
+every state as read-only, including inside option callbacks and subscribers. The
+API reference defines the exact [state object ownership](api.md#state-object-ownership)
+and snapshot behavior.
 
 ## Destroy the tracker
 
@@ -154,7 +168,61 @@ if (import.meta.hot) {
 }
 ```
 
-## Track a custom scroll root
+## Choose a scroll root
+
+The root is the rectangle against which ScrollProgress measures the target. Choose
+it according to which scrollable area owns the effect:
+
+| `root` value | Typical use                                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `null`       | Ordinary page scrolling, such as reveals, reading progress and sticky page effects. This is the default.         |
+| `document`   | The same page-level behavior, when reusable configuration code should name the current document root explicitly. |
+| `Element`    | Scrolling inside a component, such as a carousel, modal, sidebar or `overflow: auto` panel.                      |
+
+The examples below continue to use the validated `target` from
+[Create a tracker](#create-a-tracker). Each example is independent.
+
+### Use the implicit viewport
+
+Omitting `root` is equivalent to passing `root: null`:
+
+```js
+const tracker = trackScrollProgress(target, {
+    root: null
+});
+
+function cleanup() {
+    tracker.destroy();
+}
+```
+
+This is normally the clearest choice for effects driven by the main page scroll.
+
+### Express the document root explicitly
+
+`document` still uses viewport geometry and document-level scroll events:
+
+```js
+const tracker = trackScrollProgress(target, {
+    root: document
+});
+
+function cleanup() {
+    tracker.destroy();
+}
+```
+
+`null` and `document` therefore produce the same progress model, but they express
+different intent. `null` asks the browser observer to use its implicit viewport
+root. `document` passes the current `Document` explicitly. The explicit form is
+useful in a wrapper, factory or shared configuration object where the selected
+root should be visible as data. It does not provide a geometry or performance
+advantage for ordinary page tracking.
+
+Only `null` is the default. If `root` is omitted, ScrollProgress does not replace
+it with `document`; it resolves the option to `null`.
+
+### Track inside an element
 
 Pass a scrolling ancestor as `root` to calculate progress inside that element:
 
@@ -166,30 +234,34 @@ if (!(root instanceof HTMLElement)) {
 }
 
 const tracker = trackScrollProgress(target, {
-    root
+    root,
+    requireRootVisible: true
 });
+
+function cleanup() {
+    tracker.destroy();
+}
 ```
 
 Custom-root progress uses the root's inner client box, excluding its border and
 scrollbars. The target and root must belong to the current document, and the root
 should be an untransformed scrolling ancestor of the target.
 
-Set `requireRootVisible: true` when tracking should be active only while the custom
-root is also visible in the page viewport:
+An element root introduces two relevant rectangles: the target can be visible
+inside its scroll container while that entire container is outside the browser
+viewport. `requireRootVisible: true` makes `isTracking` require both conditions.
+Without it, `isTracking` follows only the target's intersection with the element
+root.
 
-```js
-const tracker = trackScrollProgress(target, {
-    root,
-    requireRootVisible: true
-});
-```
-
-Without this option, `isTracking` follows the target's intersection with the custom
-root even when that root is outside the viewport.
+This extra visibility gate applies only to an `Element` root. With `null` or
+`document`, the root already represents the page viewport, so `isRootVisible`
+remains `true` and `requireRootVisible` adds no behavior. The
+[API options](api.md#options) define the exact observer and geometry contract.
 
 ## Change the axis
 
-Use `axis: 'x'` for horizontal geometry:
+Use `axis: 'x'` for horizontal geometry. This example continues with the validated
+`root` from [Track inside an element](#track-inside-an-element):
 
 ```js
 const tracker = trackScrollProgress(target, {
@@ -198,8 +270,17 @@ const tracker = trackScrollProgress(target, {
 });
 ```
 
-A custom horizontal root is usually simpler than document-level horizontal
-tracking, especially on mobile browsers.
+`axis: 'x'` changes the measured axis; it does not create horizontal overflow or
+choose a different scroll container. With `root: null` or `root: document`,
+ScrollProgress reads document-level horizontal scrolling. Use that form for an
+intentionally horizontal document, typically a dedicated full-page experience.
+
+For a carousel, gallery or horizontally scrolling panel inside an otherwise
+vertical page, pass that scrolling element as `root`. Its `scrollLeft` belongs to
+the component rather than the document. See the
+[horizontal root recipe](recipes.md#horizontal-root) for a complete example.
+Document-level horizontal input and scrolling can vary across browsers,
+especially on mobile.
 
 ## Write progress to CSS
 
@@ -249,8 +330,12 @@ const tracker = trackScrollProgress(target, {
 ```
 
 The tracker must enter active tracking before it can complete. The final update is
-delivered before cleanup. Ordinary progress completes at `1`; inverted progress
-completes at `0`. Calling `destroy()` later remains safe.
+delivered before cleanup. The synchronous geometry read alone cannot complete the
+tracker because it has not entered tracking yet. If the first intersection event
+activates tracking when progress is already at its terminal value, `onEnter`, the
+update callback and subscribers, and automatic cleanup all run in that same
+synchronization. Ordinary progress completes at `1`; inverted progress completes
+at `0`. Calling `destroy()` later remains safe.
 
 ## Enter and leave tracking
 
@@ -394,5 +479,7 @@ removeDestroyCallback();
 ```
 
 Destruction attempts every callback that was registered when destruction began and
-then propagates the first thrown value, if any. See the [API reference](api.md) for
-the remaining reentrancy and update edge cases.
+then propagates the first thrown value, if any. Registering after destruction runs
+the callback immediately and synchronously; if it throws, `onDestroy()` propagates
+that same value. See the [API reference](api.md) for the remaining reentrancy and
+update edge cases.

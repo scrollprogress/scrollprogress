@@ -101,13 +101,30 @@ during construction.
 `start` and `end` are fractions, not percentages or pixels. Finite values outside
 `0`–`1` are valid. Most element-entry effects use `start > end`, such as the
 default `0.8 → 0.4` range. `start <= end` is accepted and can be intentional when
-the target is larger than the root, such as a page-length progress bar, but each
-tracker warns once because the same configuration can produce a zero or negative
-travel distance for shorter targets.
+the target is larger than the root, such as a
+[page-length progress bar](recipes.md#reading-progress-bar), but each tracker warns
+once because the same configuration can produce a zero or negative travel distance
+for shorter targets.
 
 Use `inverted: true` when the desired geometry is correct but the exposed value
 should run in the opposite direction. Inversion returns `1 - progress`; it does not
 swap `start` and `end` or repair a degenerate range.
+
+`root` has three supported forms. Only `null` is the default:
+
+| Value      | Geometry and events                                                                                                                             | Typical use                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `null`     | Implicit viewport geometry and document-level scroll events.                                                                                    | Ordinary page-level tracking.                                              |
+| `document` | The current `Document` is passed explicitly to `IntersectionObserver`; geometry remains viewport-based and scroll events remain document-level. | Reusable configuration that needs to express the document root explicitly. |
+| `Element`  | The element's inner client box, excluding its border and scrollbars, and the element's scroll position.                                         | Nested scrolling components.                                               |
+
+The target and any explicit root must belong to the current document.
+`requireRootVisible` gates tracking only when `root` is an `Element`; for `null`
+and `document`, `isRootVisible` remains `true`. Prefer `null` for ordinary viewport
+tracking. `document` makes the choice explicit but does not change the progress
+geometry or provide a performance advantage. See
+[Choose a scroll root](scroll-progress-core.md#choose-a-scroll-root) for the three
+complete usage examples and the `requireRootVisible` model.
 
 `rootMargin` and `observerThreshold` use native `IntersectionObserver` validation.
 Margins affect observation, not progress geometry. Thresholds control observer
@@ -116,6 +133,14 @@ notifications; `isTracking` uses `isIntersecting`, not a ratio comparison.
 `cssVar` must begin with `--` and contain at least one more character. The remaining
 CSS grammar is delegated to the browser. The property is written on the target and
 persists after tracker destruction.
+
+The initial synchronous geometry read cannot satisfy `once` by itself because the
+tracker must first enter tracking. This prevents `once` from destroying the tracker
+during construction merely because the initial geometry is already terminal,
+before `IntersectionObserver` confirms that the target has entered the observation
+area. If the first intersection notification enters tracking while progress is
+already terminal, enter, update/subscriber delivery and automatic destruction
+occur in the same synchronization.
 
 ## `ScrollProgressState`
 
@@ -130,6 +155,82 @@ interface ScrollProgressState {
     readonly intersectionRatio: number;
 }
 ```
+
+### State object ownership
+
+The `readonly` declarations express the consumer contract; state objects are not
+frozen with `Object.freeze()` at runtime. JavaScript can therefore assign to their
+fields, but doing so is unsupported. Option callbacks and subscribers must always
+treat the received state as read-only.
+
+The following examples are independent and assume an existing `tracker`. Their
+cleanup ends only the consumer subscription; the tracker remains owned by the code
+that created it.
+
+#### Derive application state
+
+Create a separate object when application code needs additional or transformed
+values. This example publishes a view-specific percentage without changing the
+ScrollProgress state:
+
+```js
+const unsubscribe = tracker.subscribe((state) => {
+    const viewState = {
+        ...state,
+        percentage: Math.round(state.progress * 100)
+    };
+
+    window.dispatchEvent(
+        new CustomEvent('section-progress', {
+            detail: viewState
+        })
+    );
+});
+
+function cleanup() {
+    unsubscribe();
+}
+```
+
+#### Keep the latest state in a shared store
+
+A shared store can decouple several consumers from the tracker or provide the
+latest value to a component mounted later:
+
+```js
+const sectionStates = new Map();
+
+const unsubscribe = tracker.subscribe((state) => {
+    sectionStates.set('hero', {
+        ...state,
+        percentage: Math.round(state.progress * 100)
+    });
+});
+
+function cleanup() {
+    unsubscribe();
+    sectionStates.delete('hero');
+}
+```
+
+Use this indirection when multiple or later-mounted consumers need shared access
+to the latest state. When one component owns the output, prefer the
+[direct subscription](#subscribe) pattern.
+
+State objects are delivered as follows:
+
+- `getState()` returns a new shallow copy on every call;
+- the immediate call made when `subscribe()` registers a subscriber receives its
+  own shallow copy of the current state;
+- an ordinary state update creates one shallow snapshot and passes that same
+  object to every subscriber in registration order.
+
+The shared snapshot means that if one subscriber mutates its argument in
+JavaScript, a later subscriber in the same notification can observe the changed
+value. Option callbacks such as `onUpdate` run before subscribers and receive the
+committed state, so mutating their argument can also affect the value retained or
+delivered during that synchronization. Do not use mutation to communicate between
+callbacks.
 
 ### `progress`
 
@@ -203,7 +304,8 @@ onDestroy(callback: ScrollProgressDestroyCallback): ScrollProgressUnsubscribe;
 ```
 
 Registers terminal cleanup and returns an idempotent removal function. After
-destruction, a newly registered callback runs immediately.
+destruction, a newly registered callback runs immediately and synchronously. If
+that callback throws, `onDestroy()` propagates the same thrown value.
 
 **JavaScript and TypeScript**
 
@@ -216,14 +318,30 @@ const removeDestroyCallback = tracker.onDestroy(() => {
 removeDestroyCallback();
 ```
 
+During destruction, every callback that was registered when destruction began is
+attempted even if an earlier callback throws or removes a later registration. The
+first thrown value is propagated after all of those callbacks have been attempted.
+
 ### `getState()`
 
 ```ts
 getState(): ScrollProgressState | null;
 ```
 
-Returns a fresh copy of the latest state, or `null` before a state is available.
-The final state remains readable after destruction.
+Returns a fresh shallow copy of the latest state. Successful construction creates
+an initial state synchronously, so the normal first call is non-null. The final
+state remains readable after destruction.
+
+The nullable return covers reconfiguration: changing `root` or
+`requireRootVisible` clears the previous state until synchronization in the next
+animation frame. During that interval `getState()` returns `null`, and a new
+subscriber is registered without receiving its immediate call. It receives the
+next ordinary notification once the replacement state exists.
+
+Do not rely on reading the replacement state immediately after `update()`. Use an
+existing [`subscribe()`](#subscribe) subscription to receive the next synchronized
+state; use `getState()` for an immediate read only when the caller handles `null`.
+No application-level `requestAnimationFrame()` coordination is required.
 
 **JavaScript and TypeScript**
 
@@ -264,6 +382,22 @@ DOM references retain their identity.
 const config = tracker.getConfig();
 console.log(config.start, config.end);
 ```
+
+The returned `root` preserves how the root was configured:
+
+| Tracker configuration | `tracker.getConfig().root`        |
+| --------------------- | --------------------------------- |
+| `root` omitted        | `null`                            |
+| `root: null`          | `null`                            |
+| `root: document`      | The current `Document` reference  |
+| `root: element`       | That specific `Element` reference |
+
+`null` represents the viewport implicitly; it is not a reference to `document`.
+Passing `root: document` preserves that explicit DOM reference for later
+inspection through `getConfig()`. The two forms still use the same viewport
+geometry and document-level scroll events. See
+[Choose a scroll root](scroll-progress-core.md#choose-a-scroll-root) for usage
+guidance and examples.
 
 ### `update()`
 
@@ -433,7 +567,7 @@ function cleanup() {
 
 ## Geometry
 
-For target start coordinate `E`, target size `S` and root size `R`:
+For target leading-edge coordinate `E`, target size `S` and root size `R`:
 
 ```text
 D = S + R × (start − end)
@@ -442,9 +576,12 @@ progress = clamp((R × start − E) / D, 0, 1)
 
 When `D <= 0`, progress is `1` if `R × start − E > 0`, otherwise `0`.
 
-Viewport geometry uses `window.innerWidth` or `window.innerHeight`. Element-root
-geometry uses the root's inner client box. Scaled or rotated roots are outside the
-supported geometry model.
+`E` is the target's leading edge relative to the root's inner leading edge along
+the selected axis. For viewport and document roots, that reference is the top or
+left viewport edge. For an element root, its border and scrollbar are excluded.
+Viewport geometry uses `window.innerWidth` or `window.innerHeight`; element-root
+geometry uses `clientWidth` or `clientHeight`. Scaled or rotated roots are outside
+the supported geometry model.
 
 ## Notification and error behavior
 

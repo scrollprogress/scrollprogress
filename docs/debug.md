@@ -57,8 +57,37 @@ function cleanup() {
 }
 ```
 
-The session owns the bridge and the tools it creates. It does not own or destroy
-the application tracker.
+### Ownership and independently managed tools
+
+A debugger session always owns the tracker registrations (bridges) it creates. It
+never owns or destroys the application trackers.
+
+When `palette`, `overlay` or `console` are enabled through the session options, the
+session creates and owns those tools. Calling `debug.destroy()` destroys both the
+session registrations and every tool created by the session. It does not destroy
+application trackers or independently created tools.
+
+Debug tools can also be created independently with `createDebugPalette()`,
+`createDebugOverlay()` or `createDebugConsoleLogger()`. Independently created tools
+observe the same debug registry, but remain owned by the application. They can be
+created, destroyed or recreated without destroying the debugger session or its
+tracker registrations.
+
+This is useful when a tool must be toggled at runtime, shared across multiple
+sessions or managed by a different application lifecycle.
+
+| Resource                               | Owned by         | Normal cleanup                               |
+| -------------------------------------- | ---------------- | -------------------------------------------- |
+| Application tracker                    | Application      | `tracker.destroy()`                          |
+| Initial tracker registration           | Debugger session | `debug.destroy()`                            |
+| Registration added with `addTracker()` | Debugger session | `registration.detach()` or `debug.destroy()` |
+| Tool enabled in session options        | Debugger session | `debug.destroy()`                            |
+| Independently created tool             | Application      | The tool controller's `destroy()`            |
+
+Destroying an application tracker also removes its active bridge item from the
+registry. An automatically completed `once` tracker retains its final snapshot,
+as described below. In either case, later cleanup through `debug.destroy()`
+remains safe.
 
 The factory supports a single-tracker form and a composable options form:
 
@@ -87,9 +116,25 @@ Session options:
 For each tool, `true` enables it with defaults, an options object is passed to its
 factory, and `false` or omission leaves it disabled.
 
+`debugScrollProgress()` is the primitive for one manual attachment. Use a session
+when registrations or session-managed tools should share a lifecycle:
+
+| Scenario                               | Recommended API                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Attach one tracker manually            | `debugScrollProgress()`                                                                                            |
+| One tracker with session-managed tools | Single-tracker `createScrollProgressDebugger()`                                                                    |
+| Several trackers known at creation     | `createScrollProgressDebugger({ trackers })`                                                                       |
+| Trackers added and removed dynamically | Empty session with `addTracker()`                                                                                  |
+| Tool lifetime identical to the session | Enable the tool in the session options                                                                             |
+| Tool toggled or managed independently  | Create the tool separately; use a session to coordinate multiple trackers or registrations with a shared lifecycle |
+
 ### Register multiple trackers
 
-Use `trackers` when the complete set is known at creation time:
+Use `trackers` when the complete set is known at creation time.
+
+The `trackers` array is consumed during session construction. Mutating it afterward
+does not register or detach trackers; use `debug.addTracker()` to add one at runtime
+and the returned controller's `detach()` to remove that registration.
 
 ```js
 import { trackScrollProgress } from '@scrollprogress/scrollprogress';
@@ -121,10 +166,60 @@ function cleanup() {
 }
 ```
 
+### Toggle a tool independently
+
+When tracker registrations should remain active while a debug tool is toggled,
+let the session own the registrations and create the tool separately. This is an
+alternative to the previous session setup: it uses the same `storyTracker` and
+`chapterTracker` variables, but replaces the previous
+`createScrollProgressDebugger()` call.
+
+```js
+import { createDebugPalette } from '@scrollprogress/scrollprogress/debug/palette';
+import { createScrollProgressDebugger } from '@scrollprogress/scrollprogress/debug/session';
+
+const registrations = [
+    { tracker: storyTracker, label: 'Story' },
+    { tracker: chapterTracker, label: 'Chapter' }
+];
+
+const debug = createScrollProgressDebugger({ trackers: registrations });
+let palette = null;
+
+function setPaletteEnabled(enabled) {
+    if (enabled && !palette) {
+        palette = createDebugPalette();
+    } else if (!enabled && palette) {
+        palette.destroy();
+        palette = null;
+    }
+}
+
+function cleanup() {
+    palette?.destroy();
+    debug.destroy();
+
+    for (const { tracker } of registrations) {
+        tracker.destroy();
+    }
+}
+```
+
+The palette can be destroyed and recreated without rebuilding the debugger
+session. The existing registrations remain in the registry and become visible
+again when a new palette is created. The palette is not scoped to this debugger
+session: it displays every item in the shared registry, including registrations
+owned by other sessions.
+
+Conversely, destroying the debugger session leaves the independent palette
+mounted. It updates to show the remaining registry items or its empty state.
+
 ### Add trackers later
 
-An empty session can create its views first and register trackers later. The
-controller returned by `addTracker()` detaches only that registration:
+An empty session can create its session-managed tools immediately and register
+trackers later. Independently created tools also observe registrations added later
+through the shared registry. The controller returned by `addTracker()` detaches
+only that registration:
 
 ```js
 import { trackScrollProgress } from '@scrollprogress/scrollprogress';
@@ -153,9 +248,14 @@ function cleanup() {
 }
 ```
 
-`detach()` is idempotent and does not destroy the tracker. The same tracker cannot
-be attached to one session more than once, whether through the initial `trackers`
-array or `addTracker()`. After detachment, it can be added to that session again.
+`detach()` is idempotent and does not destroy the tracker. `debug.destroy()`
+removes every registration still owned by the session, and also does not destroy
+the application trackers. The same tracker cannot be attached to one session more
+than once, whether through the initial `trackers` array or `addTracker()`. After
+detachment, it can be added to that session again. This restriction is scoped to
+one debugger session. The same tracker can be attached to another session, but
+each attachment creates a separate registry item and may therefore appear as a
+duplicate in debug views.
 
 The controller contract is:
 
@@ -220,6 +320,11 @@ function cleanup() {
 the debug registry. Its controller owns only the bridge: destroying it removes the
 debug item but does not destroy the tracker.
 
+For an ordinary tracker, `tracker.destroy()` also causes its bridge to remove the
+registry item; an additional `bridge.destroy()` is safe but not required. Call
+`bridge.destroy()` directly when the manual bridge ends before its tracker. A
+debug session owns and cleans up the bridges it creates internally.
+
 Options:
 
 | Option    | Default               | Meaning                                    |
@@ -233,6 +338,9 @@ unique controller `id` used for selection and lifecycle operations.
 Explicit tracker destruction removes its debug item. When a `once` tracker
 completes automatically, the bridge retains the final snapshot with
 `completed: true` until the bridge is destroyed.
+
+`bridge.destroy()` is idempotent and remains safe after the tracker has already
+been destroyed.
 
 Public types from this entry are:
 
@@ -274,6 +382,11 @@ the first snapshot logs immediately. Updates inside the interval are coalesced a
 the most recent snapshot logs at the trailing edge. `destroy()` cancels a pending
 trailing log and unsubscribes.
 
+The registry automatically selects its first item, even when no palette is
+mounted, so the logger begins with that item. An empty registry or a `null`
+selection produces no new output. Clearing selection does not cancel a trailing
+log that throttling already scheduled; `logger.destroy()` does.
+
 Public types:
 
 - `ScrollProgressDebugConsoleLoggerOptions`
@@ -304,6 +417,10 @@ Options:
 | `target`    | `document.body` | `HTMLElement` that receives the palette                  |
 | `className` | —               | Space-separated classes added to its root                |
 | `theme`     | —               | Name selected through `data-scroll-progress-debug-theme` |
+
+If a custom `target` is removed from the DOM, the palette disappears with it, but
+its controller keeps registry and control-group subscriptions until `destroy()` is
+called.
 
 The returned `ScrollProgressDebugPaletteController` has an idempotent `destroy()`.
 Destruction removes the palette DOM, listeners and subscriptions; it does not
@@ -350,42 +467,93 @@ colors, clipping and label placement.
 ## Add palette control groups
 
 Third-party integrations can add declarative buttons and toggles without accessing
-palette DOM:
+palette DOM. A group may be registered before any palette exists; it appears when
+a palette is mounted:
 
 ```js
 import {
     registerDebugPaletteControlGroup
 } from '@scrollprogress/scrollprogress/debug/palette';
 
-const snapshotControls = registerDebugPaletteControlGroup({
-    label: 'Snapshot',
-    controls: [
+let verbose = false;
+let diagnostics;
+
+function createControls() {
+    return [
         {
-            id: 'copy',
+            id: 'log',
             type: 'button',
-            label: 'Copy selected state',
+            label: 'Log selected state',
             onActivate({ selectedItem }) {
                 if (!selectedItem) return;
 
-                void navigator.clipboard.writeText(
-                    JSON.stringify(selectedItem.state, null, 2)
-                ).catch((error) => {
-                    console.error('Could not copy debug state', error);
-                });
+                console.log(verbose ? selectedItem : selectedItem.state);
+            }
+        },
+        {
+            id: 'verbose',
+            type: 'toggle',
+            label: 'Verbose logging',
+            pressed: verbose,
+            onActivate() {
+                verbose = !verbose;
+                diagnostics.update({ controls: createControls() });
+            }
+        }
+    ];
+}
+
+diagnostics = registerDebugPaletteControlGroup({
+    label: 'Diagnostics',
+    controls: createControls(),
+    footerActions: [
+        {
+            id: 'reset',
+            label: 'Reset',
+            onActivate() {
+                verbose = false;
+                diagnostics.update({ controls: createControls() });
             }
         }
     ]
 });
 
-snapshotControls.update({ label: 'Snapshot tools' });
-
 function cleanup() {
-    snapshotControls.destroy();
+    diagnostics.destroy();
 }
 ```
 
-Actions receive a fresh registry snapshot and the selected item. The returned
-controller exposes `id`, `update()` and an idempotent `destroy()`.
+The group receives a generated `id` and keeps its registration position. Controls
+and footer actions render in array order. IDs must be unique across both arrays in
+the group; duplicates are not validated and make activation ambiguous.
+
+Footer actions are secondary actions rendered in the group footer. Controls and
+footer actions receive the same fresh registry snapshot and selected item when
+activated. The palette calls `onActivate()` synchronously, before its activation
+event handler returns. Thrown values are not caught. If the callback returns a
+promise, the palette does not await it or handle its rejection, so asynchronous
+work must manage its own errors. In this example, `refreshDiagnostics()` is an
+application function that returns a promise:
+
+```js
+const refreshControl = {
+    id: 'refresh',
+    type: 'button',
+    label: 'Refresh diagnostics',
+    async onActivate() {
+        try {
+            await refreshDiagnostics();
+        } catch (error) {
+            console.error('Could not refresh diagnostics', error);
+        }
+    }
+};
+```
+
+The returned controller exposes `id`, `update()` and an idempotent `destroy()`.
+`update()` preserves omitted fields, but a supplied `controls` or `footerActions`
+array replaces that entire array; `footerActions: []` removes all footer actions.
+After destruction, further updates are ignored.
 
 Button and toggle groups are the supported RC1 extension boundary. Arbitrary
 markup, custom renderers and direct palette DOM access are not public APIs.
@@ -404,7 +572,7 @@ Public palette types:
 
 ## Connect a third-party data source
 
-The registry entry lets an integration publish tracker-compatible diagnostic data:
+The registry entry lets an integration publish tracker-compatible diagnostic data.
 
 The following example assumes `element` is an `HTMLElement` and
 `externalTracker` implements the tracker methods shown:
@@ -431,8 +599,11 @@ function cleanup() {
 ```
 
 The required `element` is the target represented by the item. A registration can
-also provide `debugId`, `label`, `state`, `completed` and the same resolved tracking
-fields exposed by `tracker.getConfig()`; omitted values use the registry defaults.
+also provide `debugId`, `label`, `state`, `completed`, and these tracker-compatible
+fields: `start`, `end`, `axis`, `root`, `rootMargin`, `observerThreshold`,
+`inverted`, `once`, `requireRootVisible`, and `cssVar`. For a native tracker, use
+`tracker.getConfig()`; the field contracts and defaults are in the
+[API options table](api.md#options). Omitted values use the registry defaults.
 
 The returned controller exposes its unique `id`. `debugItem.update()` changes
 registry data only; it never calls the external tracker's `update()` method.
