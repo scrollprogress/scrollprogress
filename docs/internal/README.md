@@ -9,7 +9,9 @@ Start with:
 
 - [Development](development.md) for local setup, commands and repository checks;
 - [Browser testing and report interpretation](browser-testing.md) for installed
-  package smoke tests, reports and benchmarks.
+  package smoke tests, reports and benchmarks;
+- [AI-assisted development](ai-development.md) for shared agent instructions, skills and
+  multi-agent adapters.
 
 Release maintainers also use:
 
