@@ -239,11 +239,10 @@ describe('scroll progress debug overlay scroll synchronization', () => {
         expect(windowScrollListener).toBeDefined();
         expect(documentScrollListener).toBeDefined();
 
-        expect(documentAddEventListener).toHaveBeenCalledWith(
-            'scroll',
-            documentScrollListener,
-            true
-        );
+        expect(documentAddEventListener).toHaveBeenCalledWith('scroll', documentScrollListener, {
+            capture: true,
+            passive: true
+        });
 
         overlay.destroy();
         overlay = undefined;

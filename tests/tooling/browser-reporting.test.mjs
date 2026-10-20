@@ -5,7 +5,12 @@ import { createBrowserReport } from '../../tests/browser/reporting.js';
 
 function page(
     t,
-    metadata = { package: 'example@1.0.0-rc.1', sha256: 'a'.repeat(64), mode: 'project-local' }
+    metadata = {
+        package: 'example@1.0.0-rc.1',
+        sha256: 'a'.repeat(64),
+        mode: 'project-local',
+        benchmarkFixtureSha256: 'b'.repeat(64)
+    }
 ) {
     const window = new Window();
     window.document.body.innerHTML =
@@ -58,6 +63,8 @@ test('downloads identified smoke results and current notes without mutating comp
     assert.equal(saved.results[0].result, 'PASS');
     assert.equal(saved.observations.notes, 'A manually recorded observation');
     assert.equal(saved.artifact.sha256, 'a'.repeat(64));
+    assert.equal(saved.artifact.benchmarkFixtureSha256, 'b'.repeat(64));
+    assert.equal(saved.schemaVersion, 1);
     assert.equal(saved.status, 'passed');
     assert(saved.savedAt && saved.startedAt && saved.environment.viewport);
     assert.match(ui.filename(), /^scrollprogress-smoke-.*\.json$/);

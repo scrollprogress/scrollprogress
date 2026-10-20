@@ -1,14 +1,19 @@
+import { resolveEffectiveRoot } from './utils/effective-root-utils.js';
 import { calculateScrollProgress } from './core.js';
 import type { ReadScrollProgressOptions, ScrollProgressAxis, ScrollProgressRoot } from './types.js';
 
 export function readScrollProgress(
     element: HTMLElement,
     options: ReadScrollProgressOptions
-): number {
+): number | null {
     validateReadScrollProgressInput(element, options);
 
+    if (!element.isConnected || element.getClientRects().length === 0) {
+        return null;
+    }
+
     const axis = options.axis ?? 'y';
-    const root = options.root ?? null;
+    const root = resolveEffectiveRoot(options.root ?? null);
     const rect = element.getBoundingClientRect();
 
     return calculateScrollProgress({

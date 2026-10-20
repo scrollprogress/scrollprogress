@@ -50,10 +50,25 @@ function diagnostics() {
         time: new Date().toISOString(),
         userAgent: navigator.userAgent,
         destroyed,
-        config: config && { ...config, root: config.root ? 'custom' : 'viewport' },
+        config: config && {
+            ...config,
+            root:
+                config.root === null ||
+                config.root === document ||
+                config.root === document.documentElement ||
+                (config.root === document.body && config.root === document.scrollingElement)
+                    ? 'viewport'
+                    : 'custom'
+        },
         state: tracker?.getState(),
         directProgress,
-        expectedProgress: config && (config.inverted ? 1 - directProgress : directProgress),
+        expectedProgress:
+            config &&
+            (directProgress === null
+                ? null
+                : config.inverted
+                  ? 1 - directProgress
+                  : directProgress),
         innerWidth,
         innerHeight,
         scrollX,

@@ -21,7 +21,7 @@ function readCurrentProgress(): void {
         root: null
     });
 
-    output.value = progress.toFixed(3);
+    output.value = progress === null ? 'No layout box' : progress.toFixed(3);
 }
 
 button.addEventListener('click', readCurrentProgress);

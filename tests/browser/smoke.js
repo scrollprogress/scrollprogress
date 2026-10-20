@@ -85,6 +85,217 @@ async function run() {
             assert(called === 1, 'Immediate subscription');
             unsubscribe();
         });
+        await test('Hidden, detached and boxless targets preserve progress and once', async () => {
+            const sample = document.createElement('div');
+            sample.style.cssText = 'width:50px;height:50px';
+            root.firstElementChild.append(sample);
+            const local = keep(
+                trackScrollProgress(sample, { root, once: true, cssVar: '--box-progress' })
+            );
+            await until(() => local.getState().isTracking);
+            const progress = local.getState().progress;
+            for (const display of ['none', 'contents']) {
+                sample.style.display = display;
+                local.update({});
+                await settle();
+                near(local.getState().progress, progress);
+                near(Number(sample.style.getPropertyValue('--box-progress')), progress);
+                assert(local.getState().progressDirection === 'none', 'No measurement direction');
+                assert(
+                    readScrollProgress(sample, local.getConfig()) === null,
+                    'Boxless direct read'
+                );
+            }
+            sample.style.display = 'block';
+            sample.parentElement.style.display = 'none';
+            local.update({});
+            await settle();
+            near(local.getState().progress, progress);
+            assert(readScrollProgress(sample, local.getConfig()) === null, 'Hidden ancestor read');
+            sample.parentElement.style.display = '';
+            sample.remove();
+            local.update({});
+            await settle();
+            assert(readScrollProgress(sample, local.getConfig()) === null, 'Detached read');
+            root.firstElementChild.append(sample);
+            sample.style.display = 'block';
+            sample.style.visibility = 'hidden';
+            sample.style.height = '0';
+            local.update({});
+            await settle();
+            assert(
+                typeof readScrollProgress(sample, local.getConfig()) === 'number',
+                'Zero-height visibility-hidden box'
+            );
+            assert(local.getState().isTracking, 'Tracker survived hidden and detached updates');
+            local.destroy();
+            sample.remove();
+            const hidden = document.createElement('div');
+            hidden.style.display = 'none';
+            root.append(hidden);
+            const initial = keep(trackScrollProgress(hidden, { root, inverted: true, once: true }));
+            near(initial.getState().progress, 1);
+            initial.destroy();
+            hidden.remove();
+        });
+        await test('Viewport aliases preserve state, lifecycle and configured root identity', async () => {
+            const events = [];
+            const local = keep(
+                trackScrollProgress(target, {
+                    onEnter: () => events.push('enter'),
+                    onLeave: () => events.push('leave'),
+                    requireRootVisible: true
+                })
+            );
+            const bridge = keep(debugScrollProgress(local));
+            const overlay = keep(createDebugOverlay({ visibleLayers: ['root'] }));
+            await settle();
+            const before = local.getState();
+            const eventCount = events.length;
+            for (const alias of [document, document.documentElement, null]) {
+                local.update({ root: alias });
+                assert(local.getState() !== null, 'Alias state retained');
+                await settle();
+                assert(local.getConfig().root === alias, 'Configured identity');
+                near(local.getState().progress, before.progress);
+                near(
+                    local.getState().progress,
+                    readScrollProgress(target, { ...local.getConfig(), root: null })
+                );
+                assert(local.getState().isRootVisible, 'Viewport visibility');
+                assert(
+                    getScrollProgressDebugRegistryState().items[0].root === alias,
+                    'Bridge preserves configured alias'
+                );
+                const layer = document.querySelector('[data-layer="root"]');
+                assert(
+                    layer.style.width === `${window.innerWidth}px` &&
+                        layer.style.height === `${window.innerHeight}px`,
+                    'Overlay uses viewport geometry'
+                );
+            }
+            assert(events.length === eventCount, 'No alias lifecycle transitions');
+            overlay.destroy();
+            bridge.destroy();
+            local.destroy();
+        });
+        await test('Effective root and visibility reconfiguration balance native lifecycle', async () => {
+            root.scrollIntoView({ block: 'center' });
+            await settle();
+            const events = [];
+            const local = keep(
+                trackScrollProgress(target, {
+                    root,
+                    onEnter: () => events.push('enter'),
+                    onLeave: () => events.push('leave')
+                })
+            );
+            await until(() => local.getState().isTracking);
+            local.update({ root: null });
+            assert(local.getState() === null, 'Effective root state temporarily null');
+            await until(() => events.length >= 3);
+            assert(events.join(',') === 'enter,leave,enter', 'Balanced root lifecycle');
+            local.update({ requireRootVisible: true });
+            assert(local.getState() === null, 'Visibility reconfiguration state temporarily null');
+            await settle();
+            assert(events.length === 3, 'Visible viewport causes no extra transition');
+            local.destroy();
+        });
+        await test('Expected pending-root-leave error preserves state and allows the next enter', async () => {
+            root.scrollIntoView({ block: 'center' });
+            await settle();
+            const expected = new Error('scrollprogress expected pending-root-leave smoke failure');
+            const events = [];
+            let caught = 0;
+            let local;
+            const onError = (event) => {
+                if (event.error === expected) {
+                    caught++;
+                    event.preventDefault();
+                }
+            };
+            window.addEventListener('error', onError);
+            try {
+                local = keep(
+                    trackScrollProgress(target, {
+                        root,
+                        cssVar: '--pending-leave-progress',
+                        onEnter: () => events.push('enter'),
+                        onLeave: () => {
+                            events.push('leave');
+                            const state = local.getState();
+                            assert(state !== null, 'State committed before pending leave');
+                            near(
+                                Number(target.style.getPropertyValue('--pending-leave-progress')),
+                                state.progress
+                            );
+                            throw expected;
+                        }
+                    })
+                );
+                await until(() => events.length === 1);
+                local.update({ root: null });
+                await until(() => caught === 1);
+                assert(local.getState() !== null, 'State survives expected callback error');
+                local.update({});
+                await until(() => events.length >= 3);
+                await settle();
+                assert(events.join(',') === 'enter,leave,enter', 'No duplicate lifecycle delivery');
+                assert(caught === 1, 'Only the intentional error reached window');
+            } finally {
+                local?.destroy();
+                window.removeEventListener('error', onError);
+                target.style.removeProperty('--pending-leave-progress');
+            }
+        });
+        await test('Native nested scrolling and jumps synchronize outside observation on both roots', async () => {
+            for (const custom of [false, true]) {
+                const shell = document.createElement('div');
+                shell.style.cssText = 'height:200px;width:300px;overflow:auto;position:relative';
+                shell.innerHTML =
+                    '<main style="height:180px;overflow:auto;position:relative"><div style="height:1800px;position:relative"><div style="position:absolute;top:500px;height:60px;width:60px"></div></div></main>';
+                fixture.append(shell);
+                shell.scrollIntoView({ block: 'center' });
+                await settle();
+                const middle = shell.firstElementChild;
+                const sample = middle.firstElementChild.firstElementChild;
+                const events = [];
+                const local = keep(
+                    trackScrollProgress(sample, {
+                        root: custom ? shell : null,
+                        onEnter: () => events.push('enter')
+                    })
+                );
+                await settle();
+                middle.scrollTop = 1400;
+                await settle();
+                near(local.getState().progress, readScrollProgress(sample, local.getConfig()));
+                near(local.getState().progress, 1);
+                assert(events.length === 0, 'Jump does not synthesize enter');
+                local.destroy();
+                shell.remove();
+            }
+        });
+        await test('Extended once range completes outside observation after a native entry', async () => {
+            const shell = document.createElement('div');
+            shell.style.cssText = 'height:200px;width:300px;overflow:auto;position:relative';
+            shell.innerHTML =
+                '<div style="height:1800px;position:relative"><div style="position:absolute;top:100px;height:60px;width:60px"></div></div>';
+            fixture.append(shell);
+            const sample = shell.firstElementChild.firstElementChild;
+            const local = keep(
+                trackScrollProgress(sample, { root: shell, start: 1.5, end: -0.3, once: true })
+            );
+            let destroyed = false;
+            local.onDestroy(() => {
+                destroyed = true;
+            });
+            await until(() => local.getState().isTracking);
+            shell.scrollTop = 1400;
+            await until(() => destroyed);
+            near(local.getState().progress, 1);
+            shell.remove();
+        });
         await test('Native invalid margin and threshold updates are atomic', async () => {
             for (const options of [
                 { rootMargin: 'invalid' },

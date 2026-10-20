@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from './utils/effective-root-utils.js';
 import { readScrollProgress } from './read-scroll-progress.js';
 
 import {
@@ -9,7 +10,6 @@ import {
 
 import {
     createScrollProgressState,
-    resolveIsTracking,
     shouldCompleteOnceTracking,
     shouldSkipStateUpdate
 } from './track-scroll-progress-state.js';
@@ -90,10 +90,13 @@ export function trackScrollProgress(
     let isRootVisible = true;
     let intersectionRatio = 0;
 
+    let lastMeasuredRawProgress = 0;
     let previousProgress: number | null = null;
     let previousScrollPosition: number | null = null;
     let previousState: ScrollProgressState | null = null;
 
+    let lastDeliveredTracking = false;
+    let hasPendingRootLeave = false;
     let hasEnteredTracking = false;
     let hasCompletedOnce = false;
     let isDestroyed = false;
@@ -137,6 +140,7 @@ export function trackScrollProgress(
 
         const state = createScrollProgressState({
             rawProgress,
+            fallbackRawProgress: lastMeasuredRawProgress,
             scrollPosition,
             previousProgress,
             previousScrollPosition,
@@ -147,11 +151,21 @@ export function trackScrollProgress(
             requireRootVisible: currentConfig.requireRootVisible
         });
 
-        previousProgress = state.progress;
+        if (rawProgress !== null) {
+            lastMeasuredRawProgress = rawProgress;
+            previousProgress = state.progress;
+        }
         previousScrollPosition = scrollPosition;
 
-        const wasTracking = previousState?.isTracking === true;
-        const shouldSkipUpdate = shouldSkipStateUpdate(previousState, state);
+        // A failed pending leave can commit an active state before enter is delivered.
+        const shouldSkipUpdate =
+            shouldSkipStateUpdate(previousState, state) &&
+            lastDeliveredTracking === state.isTracking;
+
+        if (!shouldSkipUpdate) {
+            previousState = state;
+            if (state.isTracking) hasEnteredTracking = true;
+        }
 
         const shouldNotifyStateSubscribers = hasPendingExplicitUpdate;
 
@@ -160,34 +174,41 @@ export function trackScrollProgress(
         writeCssVar(element, currentConfig.cssVar, state.progress);
 
         const callbacks = currentCallbacks;
-        const shouldCompleteOnce = shouldCompleteOnceTracking(
-            state,
-            currentConfig.once,
-            currentConfig.inverted,
-            hasEnteredTracking || state.isTracking
-        );
+        const shouldCompleteOnce =
+            rawProgress !== null &&
+            shouldCompleteOnceTracking(
+                state,
+                currentConfig.once,
+                currentConfig.inverted,
+                hasEnteredTracking || state.isTracking
+            );
 
         let firstError: unknown;
         let hasError = false;
 
         try {
+            // A new observer may deliver before this frame. Preserve the old root's
+            // departure even when the new root is already intersecting.
+            if (hasPendingRootLeave) {
+                hasPendingRootLeave = false;
+                lastDeliveredTracking = false;
+                callbacks.onLeave?.({
+                    ...state,
+                    isInObservationArea: false,
+                    intersectionRatio: 0,
+                    isTracking: false
+                });
+            }
+            if (isDestroyed) return;
             if (shouldSkipUpdate) {
                 if (shouldNotifyStateSubscribers) {
                     lifecycle.notifyStateSubscribers(state);
                 }
             } else {
-                previousState = state;
-
-                if (state.isTracking) {
-                    hasEnteredTracking = true;
-                }
-
-                if (!wasTracking && state.isTracking) {
-                    callbacks.onEnter?.(state);
-                }
-
-                if (wasTracking && !state.isTracking) {
-                    callbacks.onLeave?.(state);
+                if (lastDeliveredTracking !== state.isTracking) {
+                    lastDeliveredTracking = state.isTracking;
+                    if (state.isTracking) callbacks.onEnter?.(state);
+                    else callbacks.onLeave?.(state);
                 }
 
                 if (!isDestroyed) callbacks.onUpdate?.(state);
@@ -224,27 +245,18 @@ export function trackScrollProgress(
         progressUpdateScheduler.request();
     }
 
-    function requestTrackedProgressUpdate() {
+    function requestScrollProgressUpdate() {
         if (isDestroyed) {
-            return;
-        }
-
-        // Scroll updates are skipped outside the active tracking state.
-        // The observers will request an update when the target/root or
-        // root/viewport visibility changes.
-        if (!canRequestTrackedProgressUpdate()) {
             return;
         }
 
         requestProgressUpdate();
     }
 
-    function canRequestTrackedProgressUpdate(): boolean {
-        return resolveIsTracking(
-            isInObservationArea,
-            isRootVisible,
-            currentConfig.requireRootVisible
-        );
+    function handleAncestorScroll(event: Event) {
+        if (event.target instanceof Element && event.target.contains(element)) {
+            requestScrollProgressUpdate();
+        }
     }
 
     function handleIntersection(
@@ -298,15 +310,16 @@ export function trackScrollProgress(
             return;
         }
 
-        if (!(currentConfig.root instanceof Element)) {
+        const effectiveRoot = resolveEffectiveRoot(currentConfig.root);
+        if (effectiveRoot === null) {
             isRootVisible = true;
             return;
         }
 
-        isRootVisible = resolveInitialRootVisibility(currentConfig.root);
+        isRootVisible = resolveInitialRootVisibility(effectiveRoot);
 
         rootVisibilityObserver = createRootVisibilityObserver(
-            currentConfig.root,
+            effectiveRoot,
             handleRootVisibilityIntersection
         );
     }
@@ -346,7 +359,8 @@ export function trackScrollProgress(
         resizeObserver?.disconnect();
         resizeObserver = null;
 
-        removeScrollEventListeners(scrollEventTargets, requestTrackedProgressUpdate);
+        removeScrollEventListeners(scrollEventTargets, requestScrollProgressUpdate);
+        document.removeEventListener('scroll', handleAncestorScroll, true);
         window.removeEventListener('resize', requestProgressUpdate);
 
         lifecycle.destroy();
@@ -358,7 +372,8 @@ export function trackScrollProgress(
         setupObserver();
         setupRootVisibilityObserver();
         setupResizeObserver();
-        addScrollEventListeners(scrollEventTargets, requestTrackedProgressUpdate);
+        addScrollEventListeners(scrollEventTargets, requestScrollProgressUpdate);
+        document.addEventListener('scroll', handleAncestorScroll, { capture: true, passive: true });
         window.addEventListener('resize', requestProgressUpdate);
         updateProgress();
     } catch (error) {
@@ -388,7 +403,8 @@ export function trackScrollProgress(
             const nextConfig = mergeTrackScrollProgressConfig(currentConfig, nextOptions);
             validateConfig(nextConfig);
 
-            const rootChanged = nextConfig.root !== previousRoot;
+            const rootChanged =
+                resolveEffectiveRoot(nextConfig.root) !== resolveEffectiveRoot(previousRoot);
             const axisChanged = nextConfig.axis !== previousAxis;
             const requireRootVisibleChanged =
                 nextConfig.requireRootVisible !== previousRequireRootVisible;
@@ -414,10 +430,9 @@ export function trackScrollProgress(
                     );
                 }
                 if (rootChanged || requireRootVisibleChanged) {
-                    const root =
-                        nextConfig.requireRootVisible && nextConfig.root instanceof Element
-                            ? nextConfig.root
-                            : null;
+                    const root = nextConfig.requireRootVisible
+                        ? resolveEffectiveRoot(nextConfig.root)
+                        : null;
                     nextRootVisible = resolveInitialRootVisibility(root);
                     nextRootVisibilityObserver =
                         root === null
@@ -450,6 +465,7 @@ export function trackScrollProgress(
             isRootVisible = nextRootVisible;
 
             if (rootChanged) {
+                hasPendingRootLeave ||= lastDeliveredTracking;
                 isInObservationArea = false;
                 intersectionRatio = 0;
             }
@@ -478,8 +494,8 @@ export function trackScrollProgress(
             const nextScrollEventTargets = resolveScrollEventTargets(currentConfig.root);
 
             if (!areScrollEventTargetsEqual(nextScrollEventTargets, scrollEventTargets)) {
-                removeScrollEventListeners(scrollEventTargets, requestTrackedProgressUpdate);
-                addScrollEventListeners(nextScrollEventTargets, requestTrackedProgressUpdate);
+                removeScrollEventListeners(scrollEventTargets, requestScrollProgressUpdate);
+                addScrollEventListeners(nextScrollEventTargets, requestScrollProgressUpdate);
                 scrollEventTargets = nextScrollEventTargets;
             }
 

@@ -502,3 +502,7 @@ The overlay entry point exports:
 - `ScrollProgressDebugOverlayLabelPlacements`
 - `ScrollProgressDebugOverlayLayer`
 - `ScrollProgressDebugOverlayLayerVisibilityState`
+
+Targets without layout boxes retain tracker progress. The overlay may still draw
+an empty rectangle for detached targets, `display: none` or `display: contents`;
+it does not visualize the retained measurement.

@@ -1,3 +1,8 @@
+import {
+    BROWSER_FIXTURE_FILES,
+    BENCHMARK_FIXTURE_FILES,
+    hashFixtureFiles
+} from '../browser-fixture-hash.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -16,12 +21,6 @@ function hashDirectory(hash, directory, prefix) {
     }
 }
 
-function directorySha256(directory, prefix) {
-    const hash = createHash('sha256');
-    hashDirectory(hash, directory, prefix);
-    return hash.digest('hex');
-}
-
 export function localBrowserPackageInfo({
     browserDirectory,
     distributionDirectory,
@@ -31,13 +30,14 @@ export function localBrowserPackageInfo({
     function packageInfo() {
         const hash = createHash('sha256');
         hashDirectory(hash, distributionDirectory, 'dist');
-        hashDirectory(hash, browserDirectory, 'tests/browser');
+        hash.update(hashFixtureFiles(browserDirectory, BROWSER_FIXTURE_FILES));
         return {
             package: `${packageName}@${packageVersion}`,
             sha256: hash.digest('hex'),
             mode: 'local-build',
             preparedAt: new Date().toISOString(),
-            fixtureSha256: directorySha256(browserDirectory, 'tests/browser')
+            fixtureSha256: hashFixtureFiles(browserDirectory),
+            benchmarkFixtureSha256: hashFixtureFiles(browserDirectory, BENCHMARK_FIXTURE_FILES)
         };
     }
 

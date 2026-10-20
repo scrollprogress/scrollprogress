@@ -169,9 +169,10 @@ Reloading resets the session.
 
 In diagnostics, `directProgress` is the geometric reading **before inversion**;
 `expectedProgress` applies `inverted`. Compare the latter with `state.progress`
-while scrolling is stopped and after the frame update. Outside the observation
-area, state may intentionally retain the latest value, so a difference is not
-necessarily a bug. `rootMargin` changes observation, not geometric progress.
+while scrolling is stopped and after the frame update. Scroll synchronizes
+measurable geometry even outside the observation area. A target without a layout
+box retains its tracker progress while the direct read returns `null`.
+`rootMargin` changes observation, not geometric progress.
 `visualViewport` and page measurements help diagnose horizontal mobile behavior.
 
 The [public compatibility contract](../compatibility.md) remains the complete reference,
@@ -182,87 +183,185 @@ every case.
 ## 6. Benchmark: interpreting measurements correctly
 
 For normal benchmark development, run `npm run benchmark:browser`. It builds the
-local library and immediately serves the browser fixtures without running the
-full tarball-consumer validation. Its saved report uses `mode: "local-build"` and
-identifies the exact local build plus fixture with hashes. Before a release, use
-`npm run consumer:browser` to repeat the benchmark against the package installed
-from its real tarball.
+local library and serves the fixtures at `http://127.0.0.1:4175` without the full
+consumer validation. Reports use `mode: "local-build"` and identify the build and
+fixture by hashes. Use `npm run consumer:browser` for evidence against the package
+installed from its real tarball, served at `http://127.0.0.1:4174`.
 
-Open **Performance baseline**, keep the tab in the foreground and close DevTools.
-Choose **Run core baseline**, **Run debug isolation** or **Run all**, wait for
-`status: complete`, then save. `complete` means measurement finished, not that
-performance passed a threshold.
+Open **Performance baseline**, keep the tab foreground and close DevTools. Select
+a suite, wait for `status: complete`, then save. Completion means measurement
+finished, not that performance passed a threshold. The collapsible summary shows
+scenario results; the separate JSON view is the full report.
 
-The collapsible performance summary lists every scenario in the selected suite
-and fills each row as its measurement completes. It is intended for quick visual
-comparison; the separately collapsible JSON report remains the complete source
-for saved results. In the summary, palette DOM churn is the sum of complete
-subtree nodes added and removed during measured frames.
+### Suites and workloads
 
-The core suite measures 1, 100 and 300 trackers plus 1 tracker with 1,000
-subscribers. The debug-isolation suite holds the workload at 100 trackers while
-adding the bridge, overlay and palette independently, then together. It also keeps
-the 25-tracker combined-debug case as a smaller reference. The palette cannot
-display every card simultaneously: the test measures registry and rendering work
-for all items, not only visible cards.
+The current procedure is `benchmarkVersion: 4`. Do not mix version 3 reports into
+v4 comparisons. Scenario definitions are in `tests/browser/benchmark-scenarios.js`.
 
-Every scenario is a named configuration consumed by the same runner. Future
-stress profiles can vary tracker options or debug composition without duplicating
-the measurement machinery. After 12 warmup frames, each scenario measures 60
-frames while alternating the root scroll position between 0 and 40 pixels and
-requesting `update({})` for every tracker. This is a controlled workload, not a
-reproduction of every website.
+- **Core baseline**: 1, 100 and 300 trackers, plus one tracker with 1,000 subscribers.
+  IDs are `core-1`, `core-100`, `core-300` and `core-1-subscribers-1000`.
+- **Debug isolation**: a core reference and bridge, overlay and palette combinations,
+  primarily with 100 trackers, plus a combined-debug case with 25. IDs use the
+  `debug-` prefix. Palette measurements include work for all registered items,
+  including cards outside its visible area.
+- **Scroll synchronization**: eight IDs matching
+  `scroll-sync-{viewport|element}-{100|300}-{none|transform}`. The callback counts
+  deliveries and optionally writes a child transform; it never calls `update({})`.
+- **Run all** combines the classic core and debug suites. Run scroll synchronization
+  separately with its own button.
 
-The scroll check allows a maximum difference of **1 CSS pixel** from 0 and 40 to
-handle fractional values returned by browsers. When present, `warnings` records
-the difference and `scrollOffsets` retains the actual values. This is not a
-library error. Larger differences, non-finite values or a root that does not move
-when expected fail the test.
+All suites warm up for 12 frames and measure 60 frames. Classic core/debug cases
+use an element root, alternate between scroll offsets 0 and 40, and explicitly
+request `update({})` on each tracker. The offset check accepts a 1 CSS pixel
+variation, records actual positions, and warns about small differences. Larger
+deviations and non-finite values fail the run.
 
-| Scenario field          | Interpretation                                                                                                                                                                      |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`, `label`           | Stable machine-readable ID and human description of the scenario.                                                                                                                   |
-| `count`                 | Number of trackers.                                                                                                                                                                 |
-| `subscribersPerTracker` | Subscribers added by the benchmark to each tracker, in addition to `onUpdate` and any debug subscribers.                                                                            |
-| `trackerOptions`        | Scenario-specific tracker options. The shared root and delivery counter remain owned by the runner.                                                                                 |
-| `debug`                 | Explicit booleans for bridge, palette and overlay instead of one ambiguous debug flag.                                                                                              |
-| `createMs`              | Milliseconds for synchronous creation and mounting. It does not include later observer delivery and drawing.                                                                        |
-| `geometryReads`         | Calls to `getBoundingClientRect` during measured frames, including debug calls. It does not represent all browser or observer work.                                                 |
-| `readsPerFrame`         | `geometryReads` divided by the measured frame count, currently 60. Useful for detecting additional geometry reads.                                                                  |
-| `deliveries`            | `onUpdate` calls plus benchmark subscribers. Excludes warmup and does not separately count internal debug subscribers.                                                              |
-| `medianFrameMs`         | Median interval between frames: half the measurements are below it and half above. Includes browser scheduling and rendering, not only library CPU time.                            |
-| `p95FrameMs`            | Approximately 95% of frame intervals are below this value. It highlights slower frames; with 60 samples it remains a short estimate.                                                |
-| `meanScheduleMs`        | Average synchronous time required to request every update for a frame. Excludes scroll writes/reads and work performed later in `requestAnimationFrame`.                            |
-| `paletteDomMutations`   | Child-list mutation records and complete subtree nodes added/removed inside the palette during measured frames; null when no palette is active. This instrumentation has some cost. |
-| `scrollOffsets`         | Actual positions near 0 and 40, with a maximum tolerance of 1 CSS pixel, proving that the root moved.                                                                               |
-| `fixtureSize`           | Inner dimensions of the root used by the test. Compare them across runs.                                                                                                            |
+For scroll synchronization, H is `document.documentElement.clientHeight` for the
+viewport and `root.clientHeight` for an element root. `startOffset = 2 * H` and
+`travelDistance = 4 * H`. The 60-frame path goes forward and back with one reversal
+and at least 2 * H of content beyond each endpoint. Targets span 10 * H, leaving
+most outside observation. `plannedOffsets` and `scrollOffsets` contain the full
+path. Each actual offset, including the first, must be within 1 CSS pixel of the
+planned value; a larger deviation invalidates the run.
 
-For example, a 16.7 ms median and 33 ms p95 indicate that many frames arrive near
-the cadence of a 60 Hz display while some take longer. It does not mean that
-ScrollProgress itself consumes 16.7 ms of CPU. A 120 Hz display may produce
-intervals near 8.3 ms. This benchmark has no universal PASS threshold.
+The extracted `benchmark-fixture.js` resets scroll, clears previous content,
+rebuilds targets, stabilizes and records the first offset. Its finally cleanup
+destroys resources in reverse order, removes targets and restores startOffset,
+including after errors. The viewport host is then removed and document scroll
+returns to zero. Tooling tests cover isolation between scenarios and cleanup errors.
 
-To compare two changes:
+### Metrics and limits
 
-1. Use the same device, browser, viewport, zoom, power state and similar
-   conditions. Avoid other heavy workloads; the page cannot detect all of them.
-2. Run each candidate at least three times and save the results. Look for a
-   repeated trend rather than a small difference in one run.
-3. Compare the same scenario ID, suite and `benchmarkVersion`, checking package
-   version and hash. Compare frame intervals, geometry reads and palette DOM churn.
-4. If `warnings` reports a hidden tab or resize, repeat without interrupting the
-   run. `failed` contains the error and completed scenarios; `running` is partial.
-5. A repeated regression deserves investigation. One isolated value does not
-   prove a regression, and a short benchmark does not certify every application.
+| Field                         | Meaning                                                                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `label`, `count`        | Scenario identity, description and tracker count.                                                                                         |
+| `subscribersPerTracker`       | Additional subscribers, excluding onUpdate and internal debug subscriptions.                                                              |
+| `trackerOptions`, `debug`     | Tracker configuration and explicit debug composition.                                                                                     |
+| `createMs`                    | Synchronous creation and mounting time; excludes later observer delivery and drawing.                                                     |
+| `geometryReads`               | Instrumented getBoundingClientRect calls during measured frames, including debug calls; excludes getClientRects and native observer work. |
+| `readsPerFrame`               | geometryReads divided by 60 measured frames.                                                                                              |
+| `deliveries`                  | onUpdate and benchmark subscriber calls, excluding warmup and internal debug subscribers.                                                 |
+| `medianFrameMs`, `p95FrameMs` | Median and 95th-percentile frame intervals, including browser scheduling and rendering.                                                   |
+| `meanScheduleMs`              | Synchronous update-request time in classic suites, or scroll write/read time in scroll-sync; excludes deferred tracker execution.         |
+| `paletteDomMutations`         | Child-list records and complete subtree nodes added/removed in the palette; null without a palette. Instrumentation adds some overhead.   |
+| `scrollOffsets`               | Actual offsets: distinct near-0/40 positions in classic suites, the complete path in scroll-sync.                                         |
+| `fixtureSize`                 | Measured root or viewport dimensions.                                                                                                     |
 
-The current method is identified by `benchmarkVersion: 3`. This number describes
-the measurement procedure, not the ScrollProgress version. Version 3 introduces
-named suites, explicit debug composition and palette DOM-mutation counters. Its
-timings are not directly interchangeable with version 2 because mutation
-instrumentation adds work to palette scenarios. Also compare `fixtureSha256` to
-identify the exact fixture revision.
+Frame intervals near 16.7 ms describe approximately 60 Hz cadence; they do not
+mean the library used 16.7 ms of CPU. A 120 Hz display may produce intervals near
+8.3 ms. Stable intervals can coexist with increased geometry work and deliveries.
+The fixture does not necessarily reproduce layout costs caused by application DOM
+writes. A passing comparison guardrail neither establishes unchanged CPU cost nor
+guarantees that no frames were missed. Profiling is a separate diagnostic activity.
 
-Version 3 is the first baseline retained for future comparisons. Earlier reports
-used different scenarios or an older measurement method and must not be mixed
-with the new baseline. Recreate measurements with the current fixture instead of
-carrying those values forward.
+### Identity and comparison
+
+`benchmarkFixtureSha256` hashes benchmark.html, benchmark.js, benchmark-fixture.js,
+benchmark-scenarios.js, benchmark-metrics.js and reporting.js. Freeze these files
+across a comparison. Both package-info generators use the shared explicit file
+lists in `tests/browser/tooling/browser-fixture-hash.mjs`.
+
+In v4, `fixtureSha256` hashes the explicit browser fixture list rather than scanning
+the directory. Smoke changes may change this hash without affecting the benchmark
+hash. The artifact SHA-256 identifies the local distribution plus fixture, or the
+installed tarball, according to mode. `schemaVersion` remains 1 and metadata is
+included under the report's artifact object.
+
+For a reproducible comparison:
+
+1. Use committed candidates with clean tracked files and the same benchmark hash.
+   Record HEAD before export. Preserve raw JSON downloads without editing them.
+2. Use the same exact browser, OS, viewport, DPR, zoom, throttling, visibility and
+   similar power/load conditions. Record headless mode and whether a trace was used.
+3. Acquire at least three runs per suite and candidate. Compare matching IDs and
+   benchmark versions using the median across runs and the baseline minimum–maximum.
+4. Reject errors, incomplete scenarios, unexpected scroll clamps, changed benchmark
+   hashes and visibility/resize warnings. Record excluded runs and repeat them.
+5. A chosen regression guardrail can flag a candidate if the median across runs of
+   either medianFrameMs or p95FrameMs exceeds the baseline median by more than 10%
+   AND exceeds the baseline maximum. A pass means only that this condition did not
+   trigger. Treat other metrics as diagnostics and investigate repeated trends.
+
+The automated capture tool uses headless Chrome, 1280x900, DPR 1 and DevTools
+Protocol CPU throttling 4x, without a Performance trace. Headless measurements are
+comparative diagnostics, not physical-device certification. Classic core runs can
+serve as an additional control alongside scroll-sync comparisons.
+
+## 7. Automated report capture
+
+`scripts/capture-browser-report.mjs` is maintenance tooling, run directly with
+Node from the repository root. It requires the Node/npm versions in `.nvmrc` and
+`package.json`, installed repository dependencies and a Chrome headless process
+with its DevTools endpoint available. It does not start Chrome or an HTTP server.
+
+In one terminal, start the appropriate server:
+
+```sh
+npm run benchmark:browser
+```
+
+Or, for installed-package smoke and other consumer evidence:
+
+```sh
+npm run consumer:browser
+```
+
+Wait for the server to finish preparing its build or installation. Do not rebuild
+or change fixtures during acquisition. The local fixture server uses port 4175;
+the installed consumer normally uses 4174. Use the actual URL printed by the server.
+
+In a second terminal, start a dedicated Chrome headless instance. On macOS with
+Chrome in its standard Applications location:
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --remote-debugging-port=9222 --user-data-dir=/tmp/scrollprogress-report-chrome --no-first-run --no-default-browser-check about:blank
+```
+
+On other platforms, replace the executable and temporary profile path. Keep this
+profile separate from the normal browser profile. Port 9222 must be available;
+when choosing another port, supply its endpoint to the capture command.
+
+In a third terminal, run:
+
+```sh
+node scripts/capture-browser-report.mjs <phase> <suite> [run] [base-url] [devtools-endpoint]
+```
+
+- `phase` labels the candidate or measurement phase and is recorded with HEAD.
+- `suite` is `scroll-sync`, `core`, `debug`, `all` or `smoke`.
+- `run` defaults to `01`; use distinct run numbers for repeated measurements.
+- `base-url` defaults to `http://127.0.0.1:4175`.
+- `devtools-endpoint` defaults to `http://127.0.0.1:9222`.
+
+Examples:
+
+```sh
+node scripts/capture-browser-report.mjs baseline scroll-sync 01
+node scripts/capture-browser-report.mjs candidate core 01
+node scripts/capture-browser-report.mjs review-fixes-installed smoke 01 http://127.0.0.1:4174
+```
+
+Benchmark runs require no tracked modifications. Development smoke may run with
+modified tracked files, which the script records explicitly; final candidate smoke
+should run from a clean tracked working tree. Phase, browser/OS, HEAD, viewport,
+headless mode, CPU throttling and absence of tracing are filled before export.
+Intentional smoke errors are identified and counted by the harness; unexpected
+errors must remain visible and must not be treated as expected failures.
+
+The tool configures `Browser.setDownloadBehavior`, waits for successful completion,
+uses the page's Save button, validates the download and renames it without changing
+its contents. Temporary downloads are under `test-results/downloads/`; retained
+reports are under `test-results/reports/`:
+
+- `benchmark-<suite>-<phase>-run-<run>.json`;
+- `smoke-<phase>.json`.
+
+Use a new phase/run combination to preserve existing evidence; the smoke filename
+does not include the run number. Failed captures exit nonzero and must be diagnosed
+and repeated; a partial or failed run is not accepted evidence. Missing prerequisites
+or an unavailable endpoint require starting the corresponding process first.
+
+After capture, stop the server and dedicated Chrome process with Ctrl+C in their
+terminals. The script closes its own tab and connection, but leaves those processes
+under the maintainer's ownership. Generated reports and the temporary browser
+profile are not source files and must not be committed.

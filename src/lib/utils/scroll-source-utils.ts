@@ -1,28 +1,15 @@
+import { resolveEffectiveRoot } from './effective-root-utils.js';
 import type { ScrollProgressAxis, ScrollProgressRoot } from '../types.js';
 
 export type ScrollEventTarget = Window | Document | Element;
 
 export function resolveScrollEventTargets(root: ScrollProgressRoot): ScrollEventTarget[] {
+    root = resolveEffectiveRoot(root);
     if (root instanceof Element) {
         return [root];
     }
 
-    const targets: ScrollEventTarget[] = [];
-
-    addUniqueScrollEventTarget(targets, window);
-    addUniqueScrollEventTarget(targets, document);
-
-    if (document.scrollingElement instanceof Element) {
-        addUniqueScrollEventTarget(targets, document.scrollingElement);
-    }
-
-    addUniqueScrollEventTarget(targets, document.documentElement);
-
-    if (document.body) {
-        addUniqueScrollEventTarget(targets, document.body);
-    }
-
-    return targets;
+    return [window];
 }
 
 export function addScrollEventListeners(
@@ -30,7 +17,7 @@ export function addScrollEventListeners(
     listener: EventListener
 ): void {
     for (const target of targets) {
-        target.addEventListener('scroll', listener);
+        target.addEventListener('scroll', listener, { passive: true });
     }
 }
 
@@ -55,19 +42,12 @@ export function areScrollEventTargetsEqual(
 }
 
 export function readScrollPosition(root: ScrollProgressRoot, axis: ScrollProgressAxis): number {
+    root = resolveEffectiveRoot(root);
     if (root instanceof Element) {
         return axis === 'x' ? root.scrollLeft : root.scrollTop;
     }
 
     return readDocumentScrollPosition(axis);
-}
-
-function addUniqueScrollEventTarget(targets: ScrollEventTarget[], target: ScrollEventTarget): void {
-    if (targets.includes(target)) {
-        return;
-    }
-
-    targets.push(target);
 }
 
 function readDocumentScrollPosition(axis: ScrollProgressAxis): number {

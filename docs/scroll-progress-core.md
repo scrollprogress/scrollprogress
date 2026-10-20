@@ -56,6 +56,17 @@ tracker warns once because the same range can become degenerate for shorter
 targets. Use `inverted` to reverse the exposed value without changing this
 geometry.
 
+## Targets without layout boxes
+
+A detached target or one hidden with `display: none` (including an ancestor) or
+`display: contents` retains its last measured progress and CSS variable. Before
+the first measurement, raw progress is 0 (1 when inverted). Such updates report
+`progressDirection: 'none'`, continue reporting physical scroll direction, and
+cannot complete `once`. When the box returns, direction compares with the last
+valid measurement. IntersectionObserver still owns tracking and lifecycle events;
+no synthetic enter or leave event is created. `visibility: hidden` and a box with
+zero height are still measured.
+
 ## Receive updates
 
 Pass `onUpdate` when one owner needs to react to the current state:
@@ -179,6 +190,12 @@ it according to which scrollable area owns the effect:
 | `document`   | The same page-level behavior, when reusable configuration code should name the current document root explicitly. |
 | `Element`    | Scrolling inside a component, such as a carousel, modal, sidebar or `overflow: auto` panel.                      |
 
+The configured root remains available as `getConfig().root`. `null`, `document`
+and `document.documentElement` all use the viewport for measurement, observers
+and the overlay. `document.body` does too when it is the document's scrolling
+element; otherwise it is treated as an element root. Switching viewport aliases
+keeps state and resources and does not emit enter or leave.
+
 The examples below continue to use the validated `target` from
 [Create a tracker](#create-a-tracker). Each example is independent.
 
@@ -213,8 +230,8 @@ function cleanup() {
 ```
 
 `null` and `document` therefore produce the same progress model, but they express
-different intent. `null` asks the browser observer to use its implicit viewport
-root. `document` passes the current `Document` explicitly. The explicit form is
+different intent. Both resolve to the observer viewport (`root: null`), while
+`getConfig().root` preserves the configured alias. The explicit form is
 useful in a wrapper, factory or shared configuration object where the selected
 root should be visible as data. It does not provide a geometry or performance
 advantage for ordinary page tracking.
@@ -253,9 +270,8 @@ viewport. `requireRootVisible: true` makes `isTracking` require both conditions.
 Without it, `isTracking` follows only the target's intersection with the element
 root.
 
-This extra visibility gate applies only to an `Element` root. With `null` or
-`document`, the root already represents the page viewport, so `isRootVisible`
-remains `true` and `requireRootVisible` adds no behavior. The
+This extra visibility gate applies only to an effective element root. Viewport
+aliases keep `isRootVisible: true`, so `requireRootVisible` adds no behavior. The
 [API options](api.md#options) define the exact observer and geometry contract.
 
 ## Change the axis
@@ -335,7 +351,9 @@ tracker because it has not entered tracking yet. If the first intersection event
 activates tracking when progress is already at its terminal value, `onEnter`, the
 update callback and subscribers, and automatic cleanup all run in that same
 synchronization. Ordinary progress completes at `1`; inverted progress completes
-at `0`. Calling `destroy()` later remains safe.
+at `0`. Once tracking has been entered, a later scroll can complete the cycle
+even outside the observation area. Updates without a layout box cannot complete
+`once`. Calling `destroy()` later remains safe.
 
 ## Enter and leave tracking
 
@@ -356,6 +374,21 @@ const tracker = trackScrollProgress(target, {
 The observation area is configured by `root` and `rootMargin`. `start` and `end`
 configure progress geometry. Keeping these concepts separate prevents enter/leave
 events from being mistaken for progress milestones.
+
+Scroll continues synchronizing geometry outside tracking, including jumps past
+targets and movement of intermediate scrolling ancestors. Native intersection
+observation still determines tracking flags; scroll events do not synthesize
+enter or leave. Only targets without layout boxes retain their last progress.
+For clamped progress, notifications can still report the first physical scroll
+direction and later reversals without repeating on every movement.
+
+Changing the effective root balances an active tracker as enter → leave → enter
+when the new observer becomes active. Switching equivalent viewport aliases emits
+no lifecycle transition. Changing `requireRootVisible` emits a transition only if
+tracking actually changes. `destroy()` does not emit leave.
+
+See the [DOM and scrolling constraints](compatibility.md#dom-and-document-boundaries)
+for intermediate scrollers inside Shadow DOM.
 
 ## Configure observation
 
@@ -409,6 +442,11 @@ tracker.update({ onUpdate: undefined });
 Invalid target, root, axis, range or native observer configuration throws without
 replacing the previous usable configuration.
 
+`getState()` may temporarily return `null` after a change of effective root or
+`requireRootVisible`; it does not return `null` after a change between equivalent
+viewport aliases. Subscribe to receive the synchronized replacement state rather
+than assuming it is available immediately after `update()`.
+
 ## Invert progress
 
 `inverted: true` exposes `1 - progress` without changing physical trigger
@@ -424,7 +462,7 @@ to describe physical movement.
 ## Read progress once
 
 `readScrollProgress()` is the advanced one-shot API. It reads current geometry and
-returns one number without observers, callbacks or cleanup:
+returns a number (or `null` for a detached target or one without a layout box) without observers, callbacks or cleanup:
 
 ```js
 import { readScrollProgress } from '@scrollprogress/scrollprogress';
@@ -458,14 +496,21 @@ entry points remain available for custom composition.
 State and CSS are committed before callbacks run. For a meaningful update, the
 notification order is:
 
-1. `onEnter` or `onLeave`, when tracking changes;
-2. `onUpdate`;
-3. subscribers in registration order;
-4. automatic `once` cleanup, when completion was reached.
+1. the pending `onLeave` from an effective root change, if any;
+2. the current `onEnter` or `onLeave`, when tracking changes;
+3. `onUpdate`;
+4. subscribers in registration order;
+5. automatic `once` cleanup, when completion was reached.
 
 Callbacks are synchronous and fail fast. A thrown value does not roll back state or
 CSS. If `once` has reached completion, required cleanup still runs before the first
-thrown value is propagated. Promises returned by callbacks are not awaited.
+thrown value is propagated. A lifecycle transition is recorded before calling
+its callback and is not repeated if that callback throws. If a pending root leave
+throws before the next enter is delivered, that enter is reconsidered only at the
+next requested update; no automatic retry is scheduled. See
+[notification and error behavior](api.md#notification-and-error-behavior) for the
+idle-page consequence and the state visible from the pending leave callback.
+Promises returned by callbacks are not awaited.
 
 `onDestroy()` registers terminal cleanup:
 

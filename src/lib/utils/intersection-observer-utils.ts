@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from './effective-root-utils.js';
 import type { ScrollProgressRoot, TrackScrollProgressConfig } from '../types.js';
 
 export function createIntersectionObserverOptions(
@@ -10,7 +11,7 @@ export function createIntersectionObserverOptions(
          * null means the document viewport.
          * Custom roots define the observation area.
          */
-        root: config.root,
+        root: resolveEffectiveRoot(config.root),
 
         /**
          * Public API name: rootMargin.
@@ -70,6 +71,7 @@ export function createRootVisibilityObserver(
 }
 
 export function resolveInitialRootVisibility(root: ScrollProgressRoot): boolean {
+    root = resolveEffectiveRoot(root);
     if (!(root instanceof Element)) {
         return true;
     }

@@ -1,3 +1,8 @@
+import {
+    BROWSER_FIXTURE_FILES,
+    BENCHMARK_FIXTURE_FILES,
+    hashFixtureFiles
+} from '../tests/browser/tooling/browser-fixture-hash.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
@@ -190,7 +195,8 @@ const singleDebuggerSession: ScrollProgressDebuggerController = createScrollProg
 const sessionTracker: ScrollProgressDebuggerTrackerController = debuggerSession.addTracker(tracker, { label: 'dynamic consumer' });
 // @ts-expect-error Session controllers intentionally do not expose owned tool controllers.
 void debuggerSession.tools;
-console.log(readScrollProgress(document.body, readOptions), config, state);
+const measured: number | null = readScrollProgress(document.body, readOptions);
+console.log(measured, config, state);
 void registrySubscriber;
 // @ts-expect-error Public state snapshots are read-only.
 if (state) state.progress = 1;
@@ -302,20 +308,8 @@ for (const [name, source] of Object.entries(cases)) {
 // Copy the committed browser fixture so every browser import resolves from this
 // real installation. No repository source aliases or package symlinks are used.
 mkdirSync(path.join(directory, 'browser'));
-const fixtureHash = createHash('sha256');
-for (const file of [
-    'index.html',
-    'smoke.js',
-    'manual.html',
-    'manual.js',
-    'benchmark.html',
-    'benchmark.js',
-    'benchmark-metrics.js',
-    'benchmark-scenarios.js',
-    'reporting.js'
-]) {
+for (const file of BROWSER_FIXTURE_FILES) {
     const contents = readFileSync(path.join(repository, 'tests/browser', file));
-    fixtureHash.update(file).update('\0').update(contents);
     writeFileSync(path.join(directory, 'browser', file), contents);
 }
 const report = {
@@ -364,7 +358,11 @@ writeFileSync(
             sha256: report.sha256,
             mode: report.mode,
             preparedAt: report.time,
-            fixtureSha256: fixtureHash.digest('hex')
+            fixtureSha256: hashFixtureFiles(path.join(repository, 'tests/browser')),
+            benchmarkFixtureSha256: hashFixtureFiles(
+                path.join(repository, 'tests/browser'),
+                BENCHMARK_FIXTURE_FILES
+            )
         },
         null,
         2

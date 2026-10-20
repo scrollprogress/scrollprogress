@@ -3,6 +3,28 @@
 This changelog starts with the first public release candidate. Internal development
 history before that point is intentionally omitted.
 
+## Unreleased
+
+### Fixed
+
+- Balance enter/leave transitions across effective root changes without repeating
+  throwing lifecycle callbacks. Commit state and CSS before pending root leave,
+  and reconsider an undelivered enter on the next requested update.
+- Synchronize geometry outside tracking and through intermediate scrolling
+  ancestors, while keeping lifecycle under native intersection observation.
+- Normalize document viewport root aliases across core and overlay, preserving
+  configured root identity and resources when switching equivalent aliases.
+- Preserve progress and CSS variables for targets without layout boxes; these
+  updates no longer complete `once`.
+
+### Changed
+
+- Preserve configured viewport-root aliases while using the effective viewport for
+  resources and geometry. `getState()` may temporarily return `null` after an
+  effective root or `requireRootVisible` change, but not between equivalent aliases.
+- `readScrollProgress()` returns `number | null`, with `null` for detached targets
+  and targets without layout boxes. Consumers must handle the nullable result.
+
 ## 1.0.0-rc.1
 
 Initial public release candidate of `@scrollprogress/scrollprogress`.

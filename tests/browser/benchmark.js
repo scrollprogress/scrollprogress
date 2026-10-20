@@ -1,3 +1,4 @@
+import { scrollSyncOffset, withBenchmarkFixture } from './benchmark-fixture.js';
 import { trackScrollProgress } from '@scrollprogress/scrollprogress';
 import { debugScrollProgress } from '@scrollprogress/scrollprogress/debug';
 import { createDebugPalette } from '@scrollprogress/scrollprogress/debug/palette';
@@ -223,6 +224,123 @@ async function runCase(scenario, warnings) {
     return result;
 }
 
+async function runScrollSyncCase(scenario) {
+    const viewport = scenario.rootMode === 'viewport';
+    const root = viewport ? null : fixture;
+    const height = viewport ? document.documentElement.clientHeight : fixture.clientHeight;
+    const startOffset = 2 * height;
+    const travelDistance = 4 * height;
+    const host = viewport ? document.createElement('div') : content;
+    const setOffset = (offset) =>
+        viewport ? window.scrollTo(0, offset) : (fixture.scrollTop = offset);
+    const getOffset = () => (viewport ? window.scrollY : fixture.scrollTop);
+    Object.assign(host.style, { position: 'relative', height: `${12 * height}px` });
+    if (viewport) document.body.append(host);
+    const elements = [];
+    let reads = 0;
+    const original = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+        reads++;
+        return original.call(this);
+    };
+    try {
+        return await withBenchmarkFixture(
+            {
+                content: host,
+                startOffset,
+                setOffset,
+                getOffset,
+                createContent() {
+                    for (let index = 0; index < scenario.count; index++) {
+                        const element = document.createElement('div');
+                        Object.assign(element.style, {
+                            position: 'absolute',
+                            top: `${(index / scenario.count) * 10 * height}px`,
+                            width: '20px',
+                            height: '20px'
+                        });
+                        host.append(element);
+                        elements.push(element);
+                    }
+                },
+                async stabilize() {
+                    await frame();
+                    await frame();
+                }
+            },
+            async ({ resources, firstOffset }) => {
+                let deliveries = 0;
+                const createStart = performance.now();
+                for (const element of elements) {
+                    // Write a child transform so the measured target geometry stays fixed.
+                    const visual = document.createElement('div');
+                    element.append(visual);
+                    resources.push(
+                        trackScrollProgress(element, {
+                            root,
+                            onUpdate(state) {
+                                deliveries++;
+                                if (scenario.callbackMode === 'transform')
+                                    visual.style.transform = `translateX(${state.progress * 10}px)`;
+                            }
+                        })
+                    );
+                }
+                const createMs = performance.now() - createStart;
+                for (let index = 0; index < warmupFrames; index++) await frame();
+                reads = 0;
+                deliveries = 0;
+                const intervals = [],
+                    workSamples = [],
+                    plannedOffsets = [],
+                    scrollOffsets = [];
+                let last = performance.now();
+                for (let index = 0; index < frames; index++) {
+                    const expected = scrollSyncOffset(index, frames, startOffset, travelDistance);
+                    const start = performance.now();
+                    setOffset(expected);
+                    const actual = getOffset();
+                    checkScrollOffset(actual, expected);
+                    plannedOffsets.push(expected);
+                    scrollOffsets.push(actual);
+                    workSamples.push(performance.now() - start);
+                    await frame();
+                    const now = performance.now();
+                    intervals.push(now - last);
+                    last = now;
+                }
+                intervals.sort((a, b) => a - b);
+                return {
+                    ...scenario,
+                    createMs,
+                    geometryReads: reads,
+                    readsPerFrame: reads / frames,
+                    deliveries,
+                    medianFrameMs: medianOfSortedSamples(intervals),
+                    p95FrameMs: intervals[Math.ceil(frames * 0.95) - 1],
+                    meanScheduleMs: workSamples.reduce((a, b) => a + b, 0) / frames,
+                    startOffset,
+                    travelDistance,
+                    firstOffset,
+                    plannedOffsets,
+                    scrollOffsets,
+                    fixtureSize: {
+                        width: viewport
+                            ? document.documentElement.clientWidth
+                            : fixture.clientWidth,
+                        height
+                    }
+                };
+            }
+        );
+    } finally {
+        Element.prototype.getBoundingClientRect = original;
+        if (viewport) host.remove();
+        else host.style.height = '800px';
+        window.scrollTo(0, 0);
+    }
+}
+
 async function runSuite(suiteId) {
     runButtons.forEach((button) => {
         button.disabled = true;
@@ -248,7 +366,7 @@ async function runSuite(suiteId) {
     window.addEventListener('resize', onResize);
 
     const details = () => ({
-        benchmarkVersion: 3,
+        benchmarkVersion: 4,
         suite: suiteId,
         scenarioIds: scenarios.map((scenario) => scenario.id),
         frames,
@@ -258,12 +376,18 @@ async function runSuite(suiteId) {
     });
 
     reporting.publish('running', details());
+    document.querySelector('#save-report').disabled = true;
 
     try {
         for (const scenario of scenarios) {
-            results.push(await runCase(scenario, warnings));
+            results.push(
+                await (suiteId === 'scroll-sync'
+                    ? runScrollSyncCase(scenario)
+                    : runCase(scenario, warnings))
+            );
             renderSummary(scenarios, results);
             reporting.publish('running', details());
+            document.querySelector('#save-report').disabled = true;
         }
         reporting.publish('complete', details());
         output.dataset.result = 'complete';

@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from './effective-root-utils.js';
 import type { ScrollProgressRoot } from '../types.js';
 
 export function createScrollProgressResizeObserver(
@@ -5,6 +6,7 @@ export function createScrollProgressResizeObserver(
     root: ScrollProgressRoot,
     callback: ResizeObserverCallback
 ): ResizeObserver | null {
+    root = resolveEffectiveRoot(root);
     if (typeof ResizeObserver === 'undefined') {
         return null;
     }
