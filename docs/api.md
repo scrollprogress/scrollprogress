@@ -110,21 +110,37 @@ Use `inverted: true` when the desired geometry is correct but the exposed value
 should run in the opposite direction. Inversion returns `1 - progress`; it does not
 swap `start` and `end` or repair a degenerate range.
 
-`root` has three supported forms. Only `null` is the default:
+`root` accepts a viewport alias or an element root. Only `null` is the default:
 
-| Value      | Geometry and events                                                                                                                             | Typical use                                                                |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `null`     | Implicit viewport geometry and document-level scroll events.                                                                                    | Ordinary page-level tracking.                                              |
-| `document` | The current `Document` is passed explicitly to `IntersectionObserver`; geometry remains viewport-based and scroll events remain document-level. | Reusable configuration that needs to express the document root explicitly. |
-| `Element`  | The element's inner client box, excluding its border and scrollbars, and the element's scroll position.                                         | Nested scrolling components.                                               |
+| Value      | Geometry and events                                                                                                      | Typical use                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `null`     | Implicit viewport geometry and document-level scroll events.                                                             | Ordinary page-level tracking.                                              |
+| `document` | Viewport alias; `IntersectionObserver` receives `root: null`, with viewport geometry and passive scroll synchronization. | Reusable configuration that needs to express the document root explicitly. |
+| `Element`  | The element's inner client box, excluding its border and scrollbars, and the element's scroll position.                  | Nested scrolling components.                                               |
 
 The target and any explicit root must belong to the current document.
-`requireRootVisible` gates tracking only when `root` is an `Element`; for `null`
-and `document`, `isRootVisible` remains `true`. Prefer `null` for ordinary viewport
-tracking. `document` makes the choice explicit but does not change the progress
-geometry or provide a performance advantage. See
-[Choose a scroll root](scroll-progress-core.md#choose-a-scroll-root) for the three
-complete usage examples and the `requireRootVisible` model.
+`getConfig().root` preserves the configured value. For geometry, observers,
+listeners and the overlay, `null`, `document` and `document.documentElement`
+resolve to the viewport. `document.body` is also a viewport alias when it equals
+`document.scrollingElement`; otherwise it remains an element root.
+
+Viewport aliases use `IntersectionObserver` with `root: null` and always report
+`isRootVisible: true`. `requireRootVisible` gates tracking only for an effective
+element root. Switching equivalent aliases preserves state, direction history and
+resources without lifecycle transitions. Prefer `null` for ordinary viewport
+tracking; explicit aliases offer no geometry or performance advantage.
+
+`root: document` is normalized to the implicit viewport observer. An explicit
+Document observer root and the implicit viewport are equivalent in the main
+document; iframe and external-document coordination remain outside the RC1
+contract. See [Choose a scroll root](scroll-progress-core.md#choose-a-scroll-root)
+for examples and [compatibility](compatibility.md#dom-and-document-boundaries)
+for DOM and scrolling constraints.
+
+Direct viewport scroll listeners are passive on window; effective element roots
+use a passive listener on the root. Passive document capture additionally listens
+to scrolling elements that contain the target. Updates share the tracker's
+animation-frame scheduler.
 
 `rootMargin` and `observerThreshold` use native `IntersectionObserver` validation.
 Margins affect observation, not progress geometry. Thresholds control observer
@@ -235,12 +251,16 @@ callbacks.
 ### `progress`
 
 Clamped value from `0` to `1`. When `inverted` is enabled, this is the inverted
-value.
+value. A target that is detached or has no layout box retains the last measured
+raw progress, exposed with the current inversion setting. Before its first
+measurement, raw progress is 0. Such an update cannot complete `once`.
 
 ### `progressDirection`
 
 `'forward'`, `'backward'` or `'none'`, based on consecutive exposed progress
-values. Inversion therefore affects this field.
+values. Inversion therefore affects this field. Updates without a measurable
+box report `'none'`; when the box returns, direction compares with the last valid
+measurement.
 
 ### `scrollDirection`
 
@@ -254,13 +274,21 @@ effective observation area, not whether progress is strictly between `0` and `1`
 
 ### `isRootVisible`
 
-Always `true` unless `requireRootVisible` is enabled for an element root. In that
+Always `true` unless `requireRootVisible` is enabled for an effective element root. In that
 case it describes whether the root intersects the document viewport.
 
 ### `isTracking`
 
-The state used by `onEnter`, `onLeave`, scroll-driven synchronization and `once`.
-It equals `isInObservationArea` unless a custom-root visibility gate is enabled.
+The state used by `onEnter`, `onLeave` and entry into a `once` cycle. It equals
+`isInObservationArea` unless a custom-root visibility gate is enabled.
+
+Scroll synchronizes measurable geometry even outside observation, including jumps
+past a target and scrolls of intermediate ancestors. It does not synthesize
+lifecycle events. `once` may complete outside observation after tracking has been
+entered at least once. A clamped progress value can still notify on the first
+physical scroll-direction change and later reversals, without notifying on every
+scroll. Retention of the last progress applies to targets without layout boxes,
+not to measurable targets outside tracking.
 
 ### `intersectionRatio`
 
@@ -332,11 +360,15 @@ Returns a fresh shallow copy of the latest state. Successful construction create
 an initial state synchronously, so the normal first call is non-null. The final
 state remains readable after destruction.
 
-The nullable return covers reconfiguration: changing `root` or
+The nullable return covers reconfiguration: changing the effective root or
 `requireRootVisible` clears the previous state until synchronization in the next
 animation frame. During that interval `getState()` returns `null`, and a new
 subscriber is registered without receiving its immediate call. It receives the
 next ordinary notification once the replacement state exists.
+
+`getState()` may temporarily return `null` after a change of effective root or
+`requireRootVisible`; it does not return `null` after a change between equivalent
+viewport aliases.
 
 Do not rely on reading the replacement state immediately after `update()`. Use an
 existing [`subscribe()`](#subscribe) subscription to receive the next synchronized
@@ -423,14 +455,18 @@ tracker.update({
 - Explicit `onUpdate`, `onEnter` or `onLeave` keys set to `undefined` remove those
   callbacks.
 - `update({})` requests subscriber notification even when state is unchanged;
-  unchanged state does not call option callbacks.
+  unchanged state does not call option callbacks unless a lifecycle transition
+  remains undelivered after a callback error.
 
 Native observer validation happens before a new configuration replaces active
 resources. A failed update leaves the previous configuration usable.
 
-Changing root or axis resets direction history. Changing root also resets delivered
-intersection data. Changing root, axis or inversion resets the entry history used
-by `once`.
+Changing the effective root or axis resets direction history. An effective root
+change also resets intersection data and balances an active lifecycle as
+enter → leave → enter when the new root becomes active. Changing the effective
+root, axis or inversion resets the entry history used by `once`. Equivalent
+viewport aliases do not cause these resets. Changing `requireRootVisible` emits
+lifecycle events only when tracking actually changes.
 
 ### `destroy()`
 
@@ -454,10 +490,12 @@ tracker.destroy();
 function readScrollProgress(
     element: HTMLElement,
     options: ReadScrollProgressOptions
-): number;
+): number | null;
 ```
 
-Reads current DOM geometry and returns one progress number. It installs no
+Reads current DOM geometry and returns a progress number, or `null` when the target
+is detached or has no layout box (`display: none`, including a hidden ancestor,
+or `display: contents`). A zero-height box and `visibility: hidden` remain measurable. It installs no
 observers, callbacks, listeners or cleanup resources.
 
 Use it when an existing event handler needs a snapshot, or when the application
@@ -555,7 +593,7 @@ function showCurrentProgress() {
         end: 0.2
     });
 
-    output.value = `${Math.round(progress * 100)}%`;
+    output.value = progress === null ? 'No layout box' : `${Math.round(progress * 100)}%`;
 }
 
 button.addEventListener('click', showCurrentProgress);
@@ -585,12 +623,22 @@ the supported geometry model.
 
 ## Notification and error behavior
 
-State and CSS are committed before ordinary notifications. The order is enter or
-leave, update callback, subscribers, then optional `once` cleanup.
+State and CSS are committed before notifications, including a pending root-leave
+callback. The order is pending root leave, current enter or leave, update callback,
+subscribers, then optional `once` cleanup. The pending leave describes departure
+from the old root; `getState()` already reflects the new root's committed state.
+Lifecycle transitions are recorded before invoking their callback, so a thrown
+callback does not repeat the same transition.
 
 Notifications are synchronous and fail fast. A callback error does not roll back
 committed state or CSS output. When `once` has already reached completion,
 cleanup still occurs before the first thrown value is propagated.
+
+If a pending root-leave callback throws, an enter transition that was not delivered
+is reconsidered at the next requested update. No automatic retry is scheduled,
+so it may remain undelivered while the page is idle. At a later update, a pending
+transition is delivered only if it still matches the current tracking state,
+even if the committed state has otherwise not changed.
 
 Destruction callbacks are the exception to fail-fast delivery: `destroy()` attempts
 every callback that was registered when destruction began, then propagates the

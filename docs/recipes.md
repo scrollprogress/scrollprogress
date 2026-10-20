@@ -397,7 +397,7 @@ the final inline value.
 ## Read progress once
 
 `readScrollProgress()` is a snapshot API: it measures the current geometry and
-returns one number that is not kept up to date. Use it when an existing user
+returns a number (or `null` for a detached target or one without a layout box) that is not kept up to date. Use it when an existing user
 action, diagnostic command or application-owned render loop needs the value at a
 specific moment.
 

@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from '../../utils/effective-root-utils.js';
 import { createAnimationFrameScheduler } from '../../utils/animation-frame-utils.js';
 
 import { createScrollProgressResizeObserver } from '../../utils/resize-observer-utils.js';
@@ -6,7 +7,6 @@ import {
     addScrollEventListeners,
     areScrollEventTargetsEqual,
     removeScrollEventListeners,
-    resolveScrollEventTargets,
     type ScrollEventTarget
 } from '../../utils/scroll-source-utils.js';
 
@@ -158,7 +158,7 @@ export function createDebugOverlay(
     function getTargetClippingState(): ScrollProgressDebugOverlayTargetClippingState {
         return {
             enabled: clipTargetToRoot,
-            available: getSelectedDebugItem()?.root instanceof Element
+            available: resolveEffectiveRoot(getSelectedDebugItem()?.root ?? null) !== null
         };
     }
 
@@ -178,9 +178,8 @@ export function createDebugOverlay(
     function syncScrollEventTargets(): void {
         const selectedItem = getSelectedDebugItem();
 
-        const nextScrollEventTargets = selectedItem
-            ? resolveScrollEventTargets(selectedItem.root)
-            : [];
+        const effectiveRoot = resolveEffectiveRoot(selectedItem?.root ?? null);
+        const nextScrollEventTargets = effectiveRoot === null ? [] : [effectiveRoot];
 
         if (areScrollEventTargetsEqual(nextScrollEventTargets, scrollEventTargets)) {
             return;
@@ -197,7 +196,7 @@ export function createDebugOverlay(
         const selectedItem = getSelectedDebugItem();
 
         const nextElement = selectedItem?.element ?? null;
-        const nextRoot = selectedItem?.root instanceof Element ? selectedItem.root : null;
+        const nextRoot = resolveEffectiveRoot(selectedItem?.root ?? null);
 
         if (resizeObserverElement === nextElement && resizeObserverRoot === nextRoot) {
             return;
@@ -228,8 +227,11 @@ export function createDebugOverlay(
 
     function addLayerBoundsSyncListeners(): void {
         window.addEventListener('resize', scheduleLayerBoundsSync);
-        window.addEventListener('scroll', scheduleLayerBoundsSync);
-        document.addEventListener('scroll', scheduleLayerBoundsSync, true);
+        window.addEventListener('scroll', scheduleLayerBoundsSync, { passive: true });
+        document.addEventListener('scroll', scheduleLayerBoundsSync, {
+            capture: true,
+            passive: true
+        });
     }
 
     function removeLayerBoundsSyncListeners(): void {

@@ -65,6 +65,30 @@ describe('scroll progress debug overlay registry synchronization', () => {
         expect(getBoundingClientRect).toHaveBeenCalledTimes(2);
     });
 
+    it('preserves viewport scroll synchronization through alias and element root switches', () => {
+        vi.useFakeTimers();
+        let targetTop = 20;
+        const target = document.createElement('div');
+        target.getBoundingClientRect = vi.fn(() => createTestRect(10, targetTop, 30, 30));
+        const root = document.createElement('div');
+        root.append(target);
+        document.body.append(root);
+        const id = registerScrollProgressDebugItem({ element: target });
+        overlay = createDebugOverlay();
+        const windowRemove = vi.spyOn(window, 'removeEventListener');
+        for (const nextRoot of [document, document.documentElement, root, null]) {
+            updateScrollProgressDebugItem(id, { root: nextRoot });
+            vi.advanceTimersToNextFrame();
+            targetTop -= 10;
+            window.dispatchEvent(new Event('scroll'));
+            vi.advanceTimersToNextFrame();
+            expect(
+                document.querySelector<HTMLElement>('[data-layer="target"]')?.style.transform
+            ).toBe(`translate3d(10px, ${targetTop}px, 0)`);
+        }
+        expect(windowRemove.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(0);
+    });
+
     it('cancels scheduled layer bounds sync on destroy', () => {
         vi.useFakeTimers();
 

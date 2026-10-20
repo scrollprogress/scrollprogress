@@ -41,28 +41,33 @@ describe('trackScrollProgress root integration', () => {
         tracker.destroy();
     });
 
-    it('does not listen to window scroll events when using a custom root', () => {
-        setupScrollProgressTestMocks();
+    it.each(['x', 'y'] as const)(
+        'ignores window and document scroll events for a custom %s root',
+        (axis) => {
+            setupScrollProgressTestMocks();
 
-        const root = createRootElementWithRect();
-        const element = createElementWithRect({});
+            const root = createRootElementWithRect();
+            const element = createElementWithRect({});
 
-        const tracker = trackScrollProgress(element, {
-            root,
-            axis: 'x'
-        });
+            const tracker = trackScrollProgress(element, {
+                root,
+                axis
+            });
 
-        getLatestIntersectionObserver().trigger(true);
-        runAnimationFrame();
+            getLatestIntersectionObserver().trigger(true);
+            runAnimationFrame();
 
-        expect(hasScheduledAnimationFrame()).toBe(false);
+            expect(hasScheduledAnimationFrame()).toBe(false);
 
-        window.dispatchEvent(new Event('scroll'));
+            window.dispatchEvent(new Event('scroll'));
 
-        expect(hasScheduledAnimationFrame()).toBe(false);
+            expect(hasScheduledAnimationFrame()).toBe(false);
+            document.dispatchEvent(new Event('scroll'));
+            expect(hasScheduledAnimationFrame()).toBe(false);
 
-        tracker.destroy();
-    });
+            tracker.destroy();
+        }
+    );
 
     it('moves the scroll listener from the old root to the new root when the root changes', () => {
         setupScrollProgressTestMocks();
@@ -87,7 +92,9 @@ describe('trackScrollProgress root integration', () => {
 
         expect(removeFirstRootScrollListener).toHaveBeenCalledWith('scroll', expect.any(Function));
 
-        expect(addSecondRootScrollListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+        expect(addSecondRootScrollListener).toHaveBeenCalledWith('scroll', expect.any(Function), {
+            passive: true
+        });
 
         runAnimationFrame();
 
@@ -99,8 +106,8 @@ describe('trackScrollProgress root integration', () => {
 
         secondRoot.dispatchEvent(new Event('scroll'));
 
-        // A new root must report its own intersection before tracked scroll work.
-        expect(hasScheduledAnimationFrame()).toBe(false);
+        // Scroll synchronizes geometry before the new root reports intersection.
+        expect(hasScheduledAnimationFrame()).toBe(true);
         getLatestIntersectionObserver().trigger(true);
         runAnimationFrame();
         secondRoot.dispatchEvent(new Event('scroll'));

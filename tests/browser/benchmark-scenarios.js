@@ -78,8 +78,23 @@ const debugScenarios = [
     }
 ];
 
+const scrollSyncScenarios = ['viewport', 'element'].flatMap((rootMode) =>
+    [100, 300].flatMap((count) =>
+        ['none', 'transform'].map((callbackMode) => ({
+            id: `scroll-sync-${rootMode}-${count}-${callbackMode}`,
+            label: `${rootMode}: ${count} trackers, ${callbackMode}`,
+            count,
+            rootMode,
+            callbackMode,
+            subscribersPerTracker: 0,
+            debug: noDebug
+        }))
+    )
+);
+
 export const benchmarkSuites = Object.freeze({
     core: Object.freeze(coreScenarios),
+    'scroll-sync': Object.freeze(scrollSyncScenarios),
     debug: Object.freeze(debugScenarios)
 });
 

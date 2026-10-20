@@ -135,6 +135,10 @@ export function createElementWithRect(rect: TestRectInit = {}): HTMLElement {
             toJSON: () => ({})
         }) as DOMRect;
 
+    element.getClientRects = () =>
+        [new DOMRect(left, top, width, height)] as unknown as DOMRectList;
+    document.body.append(element);
+
     return element;
 }
 

@@ -49,18 +49,10 @@ describe('scroll source utils', () => {
         expect(resolveScrollEventTargets(root)).toEqual([root]);
     });
 
-    it('returns document scroll targets without duplicates when root is null', () => {
-        const targets = resolveScrollEventTargets(null);
-
-        expect(targets).toContain(window);
-        expect(targets).toContain(document);
-        expect(targets).toContain(document.documentElement);
-
-        if (document.body) {
-            expect(targets).toContain(document.body);
+    it('returns only window for every viewport alias', () => {
+        for (const root of [null, document, document.documentElement]) {
+            expect(resolveScrollEventTargets(root)).toEqual([window]);
         }
-
-        expect(new Set(targets).size).toBe(targets.length);
     });
 
     it('compares scroll event target lists by order and identity', () => {
@@ -85,8 +77,8 @@ describe('scroll source utils', () => {
 
         addScrollEventListeners([firstTarget, secondTarget], listener);
 
-        expect(firstAddListener).toHaveBeenCalledWith('scroll', listener);
-        expect(secondAddListener).toHaveBeenCalledWith('scroll', listener);
+        expect(firstAddListener).toHaveBeenCalledWith('scroll', listener, { passive: true });
+        expect(secondAddListener).toHaveBeenCalledWith('scroll', listener, { passive: true });
 
         removeScrollEventListeners([firstTarget, secondTarget], listener);
 

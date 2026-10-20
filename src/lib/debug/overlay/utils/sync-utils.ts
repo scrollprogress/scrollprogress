@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from '../../../utils/effective-root-utils.js';
 import type { ScrollProgressDebugRegistryItem } from '../../registry.js';
 
 import type { ScrollProgressDebugOverlayLayer } from '../layers.js';
@@ -88,7 +89,7 @@ function syncTargetLayerClip(
     rootRect: DOMRect | null,
     clipTargetToRoot: boolean
 ): void {
-    if (!clipTargetToRoot || !(selectedItem.root instanceof Element) || !rootRect) {
+    if (!clipTargetToRoot || resolveEffectiveRoot(selectedItem.root) === null || !rootRect) {
         resetTargetLayerClip(targetLayerElement);
         return;
     }
@@ -182,7 +183,7 @@ function syncMarginLayerBounds(
 
     syncMarginLayerContent(marginLayerElement, {
         ...marginGeometry,
-        rootType: selectedItem.root instanceof Element ? 'custom' : 'viewport'
+        rootType: resolveEffectiveRoot(selectedItem.root) !== null ? 'custom' : 'viewport'
     });
 }
 

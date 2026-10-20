@@ -2,7 +2,8 @@ import { getScrollProgressDirection } from './core.js';
 import type { ScrollProgressState } from './types.js';
 
 export interface CreateScrollProgressStateInput {
-    rawProgress: number;
+    rawProgress: number | null;
+    fallbackRawProgress?: number;
     scrollPosition: number;
     previousProgress: number | null;
     previousScrollPosition: number | null;
@@ -15,6 +16,7 @@ export interface CreateScrollProgressStateInput {
 
 export function createScrollProgressState({
     rawProgress,
+    fallbackRawProgress = 0,
     scrollPosition,
     previousProgress,
     previousScrollPosition,
@@ -24,9 +26,11 @@ export function createScrollProgressState({
     inverted,
     requireRootVisible
 }: CreateScrollProgressStateInput): ScrollProgressState {
-    const progress = inverted ? 1 - rawProgress : rawProgress;
+    const measuredProgress = rawProgress ?? fallbackRawProgress;
+    const progress = inverted ? 1 - measuredProgress : measuredProgress;
 
-    const progressDirection = getScrollProgressDirection(previousProgress, progress);
+    const progressDirection =
+        rawProgress === null ? 'none' : getScrollProgressDirection(previousProgress, progress);
     const scrollDirection = getScrollProgressDirection(previousScrollPosition, scrollPosition);
 
     const isTracking = resolveIsTracking(isInObservationArea, isRootVisible, requireRootVisible);

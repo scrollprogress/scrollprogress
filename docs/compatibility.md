@@ -28,7 +28,7 @@ and the browser APIs described below.
 | `queueMicrotask`        | Used by debug registry error reporting           |
 | `console.table`         | Required only while the console logger is active |
 
-Without `ResizeObserver`, viewport resize, active scrolling, intersection changes
+Without `ResizeObserver`, viewport resize, scrolling, intersection changes
 and explicit `tracker.update({})` still synchronize state. Size changes caused by
 images, fonts, dynamic content, or resizing a custom root are not detected
 automatically unless they also cause scroll, viewport resize, intersection, or an
@@ -51,9 +51,23 @@ current `document`. External documents and iframe documents remain outside the
 supported contract; cross-document and same-origin iframe coordination are not
 supported in RC1.
 
+Viewport aliases are `null`, the current `document`, `document.documentElement`
+and `document.body` when it equals `document.scrollingElement`. They resolve to
+`IntersectionObserver` with `root: null` while the configured identity is retained.
+An explicit Document observer root and the implicit viewport are equivalent in the
+main document; this does not extend the supported contract to iframe coordination.
+A body that is not the scrolling element remains an element root.
+
 The supported custom root is an untransformed scrolling ancestor of the target.
 Scaled or rotated roots, arbitrary clipping shapes and visual-viewport compensation
 are outside the geometry model.
+
+Intermediate ancestor scrolls are captured passively on the current document and
+filtered by containment of the target. This synchronizes progress even outside
+observation, without replacing native intersection tracking. Intermediate scrollers
+inside Shadow DOM are not covered by that capture listener. Direct listeners on
+an explicitly configured root still apply; use `tracker.update({})` for otherwise
+silent geometry changes.
 
 Viewport horizontal tracking follows the browser's document scrolling behavior,
 which can vary on mobile. Prefer a custom horizontal root for component-level use.

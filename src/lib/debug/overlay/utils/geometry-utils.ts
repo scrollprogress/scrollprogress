@@ -1,3 +1,4 @@
+import { resolveEffectiveRoot } from '../../../utils/effective-root-utils.js';
 type ScrollProgressDebugOverlayRootSource = {
     root: Element | Document | null;
 };
@@ -51,13 +52,14 @@ export function getItemRootRect(item: ScrollProgressDebugOverlayRootSource | nul
         return null;
     }
 
-    if (item.root instanceof Element) {
-        const rect = item.root.getBoundingClientRect();
+    const root = resolveEffectiveRoot(item.root);
+    if (root !== null) {
+        const rect = root.getBoundingClientRect();
         return DOMRect.fromRect({
-            x: rect.left + item.root.clientLeft,
-            y: rect.top + item.root.clientTop,
-            width: item.root.clientWidth,
-            height: item.root.clientHeight
+            x: rect.left + root.clientLeft,
+            y: rect.top + root.clientTop,
+            width: root.clientWidth,
+            height: root.clientHeight
         });
     }
 
