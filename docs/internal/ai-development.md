@@ -33,8 +33,10 @@ conditional routing in `AGENTS.md` and read the corresponding `SKILL.md` directl
 
 ## Planning and pull requests
 
-`PLANS.md` defines when complex work needs a persistent plan. Working plans go in the ignored
-`notes/` directory unless the user explicitly requests a versioned design record.
+`PLANS.md` defines when complex work needs a persistent plan. Active and pending plans go
+in `notes/plans/`; completed plans move to `notes/plans/completed/`. The entire `notes/`
+directory is ignored by Git and can also contain other private notes outside `plans/`.
+Plans remain local unless the user explicitly requests a versioned design record.
 
 The pull request template asks for the observable change, public-contract impact, exact
 verification, browser evidence and documentation updates. A skipped check must include a reason;
