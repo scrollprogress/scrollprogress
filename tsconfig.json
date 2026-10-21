@@ -8,6 +8,16 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    /* Keep public-entry checks on built declarations across local package scopes. */
+    "paths": {
+      "@scrollprogress/scrollprogress": ["./dist/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug": ["./dist/debug/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug/registry": ["./dist/debug/registry/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug/palette": ["./dist/debug/palette/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug/console": ["./dist/debug/console/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug/overlay": ["./dist/debug/overlay/index.d.ts"],
+      "@scrollprogress/scrollprogress/debug/session": ["./dist/debug/session/index.d.ts"]
+    },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

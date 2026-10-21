@@ -25,6 +25,9 @@ history before that point is intentionally omitted.
 
 ### Changed
 
+- Declare CSS files as package side effects so supporting bundlers can remove
+  unused JavaScript while retaining explicitly imported debug themes.
+
 - Warn once per tracker for a measured non-positive travel distance (`D <= 0`)
   instead of warning solely on `start <= end`. Valid measured ranges stay silent;
   configuration changes are diagnosed at the next measurement, preserving the

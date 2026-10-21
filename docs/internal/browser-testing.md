@@ -365,3 +365,67 @@ After capture, stop the server and dedicated Chrome process with Ctrl+C in their
 terminals. The script closes its own tab and connection, but leaves those processes
 under the maintainer's ownership. Generated reports and the temporary browser
 profile are not source files and must not be committed.
+
+## 8. Production theme capture
+
+The `themes` suite uses the same capture tool and Chrome endpoint as smoke. It
+checks the generated production HTML, scripts and CSS against the consumer report,
+then checks both theme pages in Chrome. It does not use the smoke page's report UI.
+
+Replace `<name>`, `<phase>` and `<smoke-phase>` with your chosen consumer name
+and fresh capture labels before running these templates. Choose a new phase or run
+number for each acquisition so earlier reports remain available.
+
+After finishing source changes and checks, prepare one final consumer:
+
+```sh
+npm run consumer:browser -- --name <name>
+```
+
+Wait for the report and server URL. Keep this process running for the later smoke
+check. Local consumer preparation and theme capture require Git and a checkout.
+The external consumer check omits candidate identity and does not invoke Git to
+collect it. The local report records HEAD, the tracked diff and hashes of changed tracked and
+non-ignored untracked files. Changing source after generation requires regenerating
+the consumer; the capture refuses a stale candidate. Keep the sources unchanged
+throughout acquisition and preserve reports outside the generated consumer.
+
+In another terminal, serve only the generated production output with Vite Preview:
+
+```sh
+node --input-type=module -e 'import { preview } from "vite"; import path from "node:path"; await preview({ configFile: false, appType: "mpa", root: path.resolve("test-results/<name>/browser"), build: { outDir: "production-themes" }, preview: { host: "127.0.0.1", port: 4188, strictPort: true, open: false } });'
+```
+
+`configFile: false` prevents loading the playground build configuration. MPA mode
+keeps missing HTML paths from falling back to another page. Preview serves the
+built files without development transforms. Python and another installation are
+not needed. Start the dedicated Chrome process from section 7, then run:
+
+```sh
+node scripts/capture-browser-report.mjs <phase> themes 01 http://127.0.0.1:4188 http://127.0.0.1:9222 test-results/<name>
+```
+
+The sixth argument selects the consumer whose report identifies the served assets.
+Use a fresh phase/run combination: theme reports refuse to overwrite an existing
+`test-results/reports/themes-<phase>-run-<run>.json`. They record the artifact,
+source identity, asset hashes, browser/OS, URLs, results and page/load errors.
+A failed capture writes `status: failed` and exits nonzero. Argument errors and an
+existing destination are rejected before browser navigation.
+
+Theme capture has a 30-second deadline per page, 10-second connection/request
+limits and a 5-second cleanup request limit. Page exceptions or required HTML,
+script or stylesheet failures stop capture promptly; unrelated favicon failures
+are ignored. The tool closes only its own tabs/connections and leaves the supplied
+Chrome and servers running. Stop those processes when finished.
+
+For a capture-tool smoke regression, use the development-server URL printed by the
+same consumer process, with a new phase name:
+
+```sh
+node scripts/capture-browser-report.mjs <smoke-phase> smoke 01 http://127.0.0.1:4174 http://127.0.0.1:9222
+```
+
+Use the actual printed port. No rebuild or repack is needed between the theme and
+smoke captures. Smoke and benchmark report naming/export behavior is unchanged;
+choose unique phases to preserve earlier evidence. Benchmark execution does not
+use the themes event-handling or timeout options.

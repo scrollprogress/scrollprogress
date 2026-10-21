@@ -18,6 +18,10 @@ theme file into the application's stylesheet pipeline instead.
 
 The JavaScript examples also compile unchanged as TypeScript.
 
+The package declares CSS files as side effects, so supporting bundlers retain
+explicit theme imports while removing unused JavaScript. This does not load a
+theme automatically or guarantee identical output across bundlers.
+
 ## Theme a debug session
 
 Session options are forwarded separately to the palette and overlay factories, so
