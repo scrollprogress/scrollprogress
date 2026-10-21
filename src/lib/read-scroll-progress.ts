@@ -6,6 +6,14 @@ export function readScrollProgress(
     element: HTMLElement,
     options: ReadScrollProgressOptions
 ): number | null {
+    return measureScrollProgress(element, options);
+}
+
+export function measureScrollProgress(
+    element: HTMLElement,
+    options: ReadScrollProgressOptions,
+    onNonPositiveRange?: (distance: number) => void
+): number | null {
     validateReadScrollProgressInput(element, options);
 
     if (!element.isConnected || element.getClientRects().length === 0) {
@@ -16,13 +24,21 @@ export function readScrollProgress(
     const root = resolveEffectiveRoot(options.root ?? null);
     const rect = element.getBoundingClientRect();
 
-    return calculateScrollProgress({
+    const input = {
         elementStart: readElementStart(rect, axis, root),
         elementSize: readElementSize(rect, axis),
         rootSize: readRootSize(axis, root),
         start: options.start,
         end: options.end
-    });
+    };
+
+    if (onNonPositiveRange) {
+        const distance =
+            input.elementSize + (input.rootSize * input.start - input.rootSize * input.end);
+        if (distance <= 0) onNonPositiveRange(distance);
+    }
+
+    return calculateScrollProgress(input);
 }
 
 function validateReadScrollProgressInput(

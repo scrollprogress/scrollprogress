@@ -1,5 +1,5 @@
 import { resolveEffectiveRoot } from './utils/effective-root-utils.js';
-import { readScrollProgress } from './read-scroll-progress.js';
+import { measureScrollProgress } from './read-scroll-progress.js';
 
 import {
     copyTrackScrollProgressConfig,
@@ -102,39 +102,25 @@ export function trackScrollProgress(
     let isDestroyed = false;
     let hasPendingExplicitUpdate = false;
     let hasWarnedAboutRange = false;
+    let pendingNonPositiveRange: number | null = null;
 
     let observer: IntersectionObserver | null = null;
     let rootVisibilityObserver: IntersectionObserver | null = null;
     let resizeObserver: ResizeObserver | null = null;
     const lifecycle = createScrollProgressTrackerLifecycle(() => isDestroyed);
 
-    function warnAboutScrollProgressRange(): void {
-        if (
-            hasWarnedAboutRange ||
-            currentConfig.start > currentConfig.end ||
-            typeof console === 'undefined'
-        ) {
-            return;
-        }
-
-        hasWarnedAboutRange = true;
-
-        console.warn(
-            '[scroll-progress] start <= end: this range is allowed, ' +
-                'but check that it is intentional.',
-            element,
-            copyTrackScrollProgressConfig(currentConfig)
-        );
+    function recordNonPositiveRange(distance: number): void {
+        if (!hasWarnedAboutRange) pendingNonPositiveRange = distance;
     }
-
-    warnAboutScrollProgressRange();
 
     function updateProgress() {
         if (isDestroyed) {
             return;
         }
 
-        const rawProgress = readScrollProgress(element, currentConfig);
+        const rawProgress = measureScrollProgress(element, currentConfig, recordNonPositiveRange);
+        const nonPositiveRange = pendingNonPositiveRange;
+        pendingNonPositiveRange = null;
 
         const scrollPosition = readScrollPosition(currentConfig.root, currentConfig.axis);
 
@@ -186,12 +172,41 @@ export function trackScrollProgress(
         let firstError: unknown;
         let hasError = false;
 
+        // Consume the departure before logging so a reentrant root update cannot
+        // queue the same leave again. Keep shouldSkipUpdate based on the old value.
+        const hadPendingRootLeave = hasPendingRootLeave;
+        hasPendingRootLeave = false;
+        if (hadPendingRootLeave) lastDeliveredTracking = false;
+
+        if (nonPositiveRange !== null && !hasWarnedAboutRange) {
+            hasWarnedAboutRange = true;
+            try {
+                if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+                    console.warn(
+                        '[scroll-progress] Measured travel distance D <= 0: ' +
+                            'progress uses a step fallback (0 or 1).',
+                        element,
+                        copyTrackScrollProgressConfig(currentConfig),
+                        nonPositiveRange
+                    );
+                }
+            } catch (error) {
+                firstError = error;
+                hasError = true;
+            }
+        }
+
+        if (isDestroyed) {
+            if (hasError) throw firstError;
+            return;
+        }
+
+        let destroyedDuringPendingLeave = false;
+
         try {
             // A new observer may deliver before this frame. Preserve the old root's
             // departure even when the new root is already intersecting.
-            if (hasPendingRootLeave) {
-                hasPendingRootLeave = false;
-                lastDeliveredTracking = false;
+            if (hadPendingRootLeave) {
                 callbacks.onLeave?.({
                     ...state,
                     isInObservationArea: false,
@@ -199,8 +214,10 @@ export function trackScrollProgress(
                     isTracking: false
                 });
             }
-            if (isDestroyed) return;
-            if (shouldSkipUpdate) {
+            destroyedDuringPendingLeave = isDestroyed;
+            if (isDestroyed) {
+                // Skip notifications and once marking, but retain a logger error.
+            } else if (shouldSkipUpdate) {
                 if (shouldNotifyStateSubscribers) {
                     lifecycle.notifyStateSubscribers(state);
                 }
@@ -215,11 +232,13 @@ export function trackScrollProgress(
                 lifecycle.notifyStateSubscribers(state);
             }
         } catch (error) {
-            firstError = error;
-            hasError = true;
+            if (!hasError) {
+                firstError = error;
+                hasError = true;
+            }
         }
 
-        if (shouldCompleteOnce) {
+        if (shouldCompleteOnce && !destroyedDuringPendingLeave) {
             hasCompletedOnce = true;
 
             if (tracker) {
@@ -506,7 +525,6 @@ export function trackScrollProgress(
                 onLeave: 'onLeave' in nextOptions ? nextOptions.onLeave : currentCallbacks.onLeave
             });
 
-            warnAboutScrollProgressRange();
             hasPendingExplicitUpdate = true;
             requestProgressUpdate();
         },

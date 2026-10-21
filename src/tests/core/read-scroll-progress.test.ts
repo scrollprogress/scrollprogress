@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { readScrollProgress } from '../../lib/read-scroll-progress';
+import { measureScrollProgress, readScrollProgress } from '../../lib/read-scroll-progress';
+import { calculateScrollProgress } from '../../lib/core';
 
 import {
     createElementWithRect,
@@ -10,6 +11,7 @@ import {
 } from '../helpers/scroll-progress-test-utils';
 
 afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
 });
 
@@ -182,5 +184,112 @@ describe('readScrollProgress', () => {
         expect(() =>
             readScrollProgress(target, { start: 0.8, end: 0.4, root: foreign.body })
         ).toThrow(TypeError);
+    });
+});
+
+describe('internal measurement diagnostics', () => {
+    it.each([
+        {
+            rootSize: 1000,
+            start: 0.8,
+            end: 0.4,
+            size: 300,
+            position: 450,
+            distance: 700,
+            progress: 0.5
+        },
+        {
+            rootSize: 1000,
+            start: 0.5,
+            end: 0.5,
+            size: 300,
+            position: 350,
+            distance: 300,
+            progress: 0.5
+        },
+        {
+            rootSize: 1000,
+            start: 0,
+            end: 1,
+            size: 1200,
+            position: -100,
+            distance: 200,
+            progress: 0.5
+        },
+        { rootSize: 100, start: 0.01, end: 0.03, size: 2, position: 0, distance: 0, progress: 1 },
+        { rootSize: 1000, start: 0, end: 1, size: 1000, position: 0, distance: 0, progress: 0 },
+        { rootSize: 1000, start: 0, end: 1, size: 200, position: -1, distance: -800, progress: 1 }
+    ])(
+        'matches the calculator and literal D=$distance, progress=$progress',
+        ({ rootSize, start, end, size, position, distance, progress }) => {
+            setWindowSize({ height: rootSize });
+            const element = createElementWithRect({ height: size, top: position });
+            const diagnostic = vi.fn();
+            const options = { start, end };
+            expect(measureScrollProgress(element, options, diagnostic)).toBe(progress);
+            expect(
+                calculateScrollProgress({
+                    elementSize: size,
+                    elementStart: position,
+                    rootSize,
+                    start,
+                    end
+                })
+            ).toBe(progress);
+            expect(readScrollProgress(element, options)).toBe(progress);
+            if (distance <= 0) expect(diagnostic).toHaveBeenCalledExactlyOnceWith(distance);
+            else expect(diagnostic).not.toHaveBeenCalled();
+        }
+    );
+
+    it.each(['x', 'y'] as const)('does not add %s geometry reads with diagnostics', (axis) => {
+        const root = createElementWithRect({ top: 100, left: 100, width: 520, height: 520 });
+        const width = vi.fn(() => 500);
+        const height = vi.fn(() => 500);
+        Object.defineProperties(root, {
+            clientWidth: { get: width },
+            clientHeight: { get: height },
+            clientLeft: { value: 10 },
+            clientTop: { value: 10 }
+        });
+        const element = createElementWithRect({ top: 335, left: 335, width: 150, height: 150 });
+        const rect = vi.spyOn(element, 'getBoundingClientRect');
+        const boxes = vi.spyOn(element, 'getClientRects');
+        const rootRect = vi.spyOn(root, 'getBoundingClientRect');
+        const options = { root, axis, start: 0, end: 1 };
+        const diagnostic = vi.fn();
+        for (const notify of [undefined, diagnostic]) {
+            rect.mockClear();
+            boxes.mockClear();
+            rootRect.mockClear();
+            width.mockClear();
+            height.mockClear();
+            expect(measureScrollProgress(element, options, notify)).toBe(0);
+            expect(rect).toHaveBeenCalledTimes(1);
+            expect(boxes).toHaveBeenCalledTimes(1);
+            expect(rootRect).toHaveBeenCalledTimes(1);
+            expect(axis === 'x' ? width : height).toHaveBeenCalledTimes(1);
+            expect(axis === 'x' ? height : width).not.toHaveBeenCalled();
+        }
+        expect(diagnostic).toHaveBeenCalledExactlyOnceWith(-350);
+    });
+
+    it('reports only after all reads succeed and skips boxless targets', () => {
+        const root = createElementWithRect();
+        const element = createElementWithRect();
+        const notify = vi.fn();
+        const error = new Error('root read');
+        Object.defineProperty(root, 'clientHeight', {
+            get: () => {
+                throw error;
+            }
+        });
+        expect(() => measureScrollProgress(element, { root, start: 0, end: 1 }, notify)).toThrow(
+            error
+        );
+        expect(notify).not.toHaveBeenCalled();
+        vi.spyOn(element, 'getClientRects').mockReturnValue([] as unknown as DOMRectList);
+        expect(measureScrollProgress(element, { root, start: 0, end: 1 }, notify)).toBeNull();
+        expect(notify).not.toHaveBeenCalled();
     });
 });

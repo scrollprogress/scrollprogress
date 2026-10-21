@@ -51,10 +51,12 @@ are resolved against the root width.
 
 Finite values outside `0`–`1` are allowed. Most element-entry effects use
 `start > end`. `start <= end` can be intentional for a target larger than its root,
-such as a [page-length progress bar](recipes.md#reading-progress-bar), but the
-tracker warns once because the same range can become degenerate for shorter
-targets. Use `inverted` to reverse the exposed value without changing this
-geometry.
+such as a [page-length progress bar](recipes.md#reading-progress-bar). A tracker
+warns at most once in its lifetime only when the measured travel distance is
+non-positive (`D <= 0`; see [Geometry](api.md#geometry)), using the existing 0/1
+step fallback. Valid measured ranges do not warn. After `update()`, the diagnostic
+runs at the next measurement rather than during configuration changes. Use
+`inverted` to reverse the exposed value without changing this geometry.
 
 ## Targets without layout boxes
 

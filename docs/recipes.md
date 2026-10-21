@@ -102,9 +102,10 @@ fill is transformed, so the section's measured geometry remains stable.
 
 ### Reading progress bar
 
-> **Range warning:** this recipe intentionally uses `start <= end`, so the tracker
-> prints its configuration warning once. The story must be taller than the
-> viewport for this range to have a positive travel distance.
+> **Measured range:** with `start: 0` and `end: 1`, the story must be taller than
+> the viewport for a positive [travel distance D](api.md#geometry). That valid
+> range does not warn. An equal-height or shorter story produces `D <= 0`, a
+> once-per-tracker warning and the existing 0/1 step fallback.
 
 ```html
 <div
