@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { trackScrollProgress } from '../../lib/track-scroll-progress';
+import { hasScrollProgressTrackerCompletedOnce } from '../../lib/utils/tracker-completion-utils';
 import {
     createElementWithRect,
     createRootElementWithRect,
@@ -10,6 +11,7 @@ import {
     hasScheduledAnimationFrame,
     resetScrollProgressTestMocks,
     runAnimationFrame,
+    setWindowSize,
     setupScrollProgressTestMocks
 } from '../helpers/scroll-progress-test-utils';
 import type { ScrollProgressTracker } from '../../lib/types';
@@ -186,6 +188,54 @@ it('commits state and releases resources when pending leave destroys the tracker
     tracker.update({});
     expect(hasScheduledAnimationFrame()).toBe(false);
 });
+
+it.each([false, true])(
+    'does not mark once complete when pending leave destroys the tracker (inverted=%s)',
+    (inverted) => {
+        setWindowSize({ height: 1000 });
+        const element = createElementWithRect();
+        const onEnter = vi.fn();
+        const onUpdate = vi.fn();
+        const subscriber = vi.fn();
+        const destroyed = vi.fn();
+        const warn = vi.spyOn(console, 'warn');
+        const onLeave = vi.fn(() => tracker!.destroy());
+        tracker = trackScrollProgress(element, { inverted, onEnter, onLeave, onUpdate });
+        expect(tracker.getState()!.progress).toBeGreaterThan(0);
+        expect(tracker.getState()!.progress).toBeLessThan(1);
+        getLatestIntersectionObserver().trigger(true);
+        runAnimationFrame();
+        tracker.subscribe(subscriber);
+        tracker.onDestroy(destroyed);
+        onEnter.mockClear();
+        onUpdate.mockClear();
+        subscriber.mockClear();
+
+        element.getBoundingClientRect = () => new DOMRect(0, -1000, 300, 300);
+        tracker.update({ root: createRootElementWithRect(), once: true });
+        getLatestIntersectionObserver().trigger(true);
+        runAnimationFrame();
+
+        expect(tracker.getState()).toMatchObject({ progress: inverted ? 0 : 1, isTracking: true });
+        expect(tracker.getConfig().once).toBe(true);
+        expect(onLeave).toHaveBeenCalledTimes(1);
+        expect(destroyed).toHaveBeenCalledTimes(1);
+        expect(onEnter).not.toHaveBeenCalled();
+        expect(onUpdate).not.toHaveBeenCalled();
+        expect(subscriber).not.toHaveBeenCalled();
+        expect(hasScrollProgressTrackerCompletedOnce(tracker)).toBe(false);
+        expect(warn).not.toHaveBeenCalled();
+        for (const observer of [
+            ...getIntersectionObserverInstances(),
+            ...getResizeObserverInstances()
+        ]) {
+            expect(observer.disconnect).toHaveBeenCalledTimes(1);
+        }
+        tracker.update({});
+        window.dispatchEvent(new Event('scroll'));
+        expect(hasScheduledAnimationFrame()).toBe(false);
+    }
+);
 
 it.each([false, true])(
     'preserves terminal once state and the first error after pending leave (inverted=%s)',

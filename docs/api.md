@@ -629,8 +629,9 @@ the supported geometry model.
 
 ## Notification and error behavior
 
-State and CSS are committed before notifications, including a pending root-leave
-callback. The order is the optional measured-range diagnostic, pending root leave,
+State and CSS are committed before both the measured-range diagnostic and user
+notifications, including a pending root-leave callback. After that commit, the order
+is the optional measured-range diagnostic, pending root leave,
 current enter or leave, update callback, subscribers, then optional `once` cleanup.
 The pending leave describes departure from the old root; `getState()` already
 reflects the new root's committed state.

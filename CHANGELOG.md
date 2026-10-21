@@ -23,7 +23,6 @@ history before that point is intentionally omitted.
   instead of warning solely on `start <= end`. Valid measured ranges stay silent;
   configuration changes are diagnosed at the next measurement, preserving the
   existing step fallback without additional geometry reads.
-
 - Preserve configured viewport-root aliases while using the effective viewport for
   resources and geometry. `getState()` may temporarily return `null` after an
   effective root or `requireRootVisible` change, but not between equivalent aliases.
