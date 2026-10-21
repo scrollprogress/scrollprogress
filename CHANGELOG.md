@@ -7,6 +7,12 @@ history before that point is intentionally omitted.
 
 ### Fixed
 
+- Release terminal tracker references and subscription handles from debug bridges
+  and sessions while preserving completed `once` snapshots and duplicate rules.
+- Attempt all debugger cleanup after failures, roll back failed bridge/session
+  construction and dynamic additions, and preserve the first applicable error.
+- Reserve debug registrations before synchronous registry notification and release
+  late-acquired resources if a runtime addition destroys its owning session.
 - Balance enter/leave transitions across effective root changes without repeating
   throwing lifecycle callbacks. Commit state and CSS before pending root leave,
   and reconsider an undelivered enter on the next requested update.

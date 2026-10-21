@@ -89,6 +89,17 @@ registry. An automatically completed `once` tracker retains its final snapshot,
 as described below. In either case, later cleanup through `debug.destroy()`
 remains safe.
 
+Tracker termination releases the bridge's live subscriptions and its strong
+tracker reference. Sessions also release their ordinary terminal bridge resources;
+the remaining duplicate-registration metadata uses weak tracker keys. Completed
+`once` snapshots intentionally retain the target and configured root DOM references
+until their registration or session is cleaned up. Session-owned tools stay alive
+when individual trackers terminate, ready for later `addTracker()` calls.
+
+Initial registrations, including the single-tracker form, have no individual
+detach handle: their logical attachment and any completed snapshot last until
+`debug.destroy()`. Dynamic registrations can instead use their returned `detach()`.
+
 The factory supports a single-tracker form and a composable options form:
 
 ```ts
@@ -257,6 +268,14 @@ one debugger session. The same tracker can be attached to another session, but
 each attachment creates a separate registry item and may therefore appear as a
 duplicate in debug views.
 
+The duplicate restriction also applies after ordinary destruction or automatic
+`once` completion, until explicit detachment. Resource release does not implicitly
+detach the logical registration. After detachment, attaching an ordinarily
+destroyed tracker creates no lasting registry item, while attaching a completed
+`once` tracker creates a removable final snapshot. Neither operation revives the
+tracker. A component remount should create a fresh tracker and registration;
+unmount cleanup can call `registration.detach()` and `tracker.destroy()`.
+
 The controller contract is:
 
 ```ts
@@ -277,6 +296,14 @@ interface ScrollProgressDebuggerTrackerController {
 destroying application trackers. Calling `addTracker()` after destruction throws.
 If session construction fails, resources created earlier in that construction are
 rolled back.
+
+Cleanup attempts all session-owned tools and registrations even if one throws,
+then rethrows the first failure. Construction rollback preserves the initiating
+error. A failed runtime addition rolls back that addition without removing earlier
+registrations. If a synchronous registry notification destroys the session during
+an otherwise successful `addTracker()` call, its late-acquired resources are
+released and the call returns a harmless detached handle. Calls begun after
+session destruction still throw.
 
 The session controller exposes only `addTracker()` and `destroy()`. Use the
 individual factories below when an application needs direct runtime control over
@@ -339,8 +366,19 @@ Explicit tracker destruction removes its debug item. When a `once` tracker
 completes automatically, the bridge retains the final snapshot with
 `completed: true` until the bridge is destroyed.
 
+Setting `once: true` does not itself retain a snapshot: explicit destruction
+before automatic completion follows ordinary cleanup. Terminal cleanup releases
+all acquired subscription handles even if final snapshot reading or publication
+fails; an existing item remains removable. Synchronous terminal bridge errors
+propagate through `tracker.destroy()` or the update that completes `once`, using
+the core's existing first-error precedence. Registry subscriber errors retain
+their separate asynchronous reporting behavior.
+
 `bridge.destroy()` is idempotent and remains safe after the tracker has already
 been destroyed.
+
+If bridge construction fails, its acquired subscriptions and registry item are
+rolled back while preserving the initiating error.
 
 Public types from this entry are:
 

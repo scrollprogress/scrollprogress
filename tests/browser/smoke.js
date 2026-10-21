@@ -9,6 +9,7 @@ import {
 import { createDebugPalette } from '@scrollprogress/scrollprogress/debug/palette';
 import { createDebugOverlay } from '@scrollprogress/scrollprogress/debug/overlay';
 import { createDebugConsoleLogger } from '@scrollprogress/scrollprogress/debug/console';
+import { createScrollProgressDebugger } from '@scrollprogress/scrollprogress/debug/session';
 
 const output = document.querySelector('#results');
 const fixture = document.querySelector('#fixtures');
@@ -574,6 +575,129 @@ async function run() {
             });
             await settle();
         });
+        await test('Persistent debugger releases ordinary trackers and owns only its once snapshots and tools', async () => {
+            root.scrollTop = 0;
+            root.scrollLeft = 0;
+            target.style.top = '160px';
+            target.style.left = '0px';
+            await settle();
+            const debug = keep(
+                createScrollProgressDebugger({
+                    palette: { className: 'm6-owned-palette' },
+                    overlay: { className: 'm6-owned-overlay' }
+                })
+            );
+            const independent = keep(createDebugPalette({ className: 'm6-independent-palette' }));
+            const rejectsDuplicate = (local) => {
+                let rejected = false;
+                try {
+                    debug.addTracker(local);
+                } catch (error) {
+                    rejected = error.message.includes('already attached');
+                }
+                assert(rejected, 'Terminal registration still rejects duplicate');
+            };
+            try {
+                for (let index = 0; index < 32; index++) {
+                    const local = keep(trackScrollProgress(target, { root }));
+                    const registration = debug.addTracker(local);
+                    local.destroy();
+                    rejectsDuplicate(local);
+                    registration.detach();
+                    const reattached = debug.addTracker(local);
+                    registration.detach();
+                    rejectsDuplicate(local);
+                    reattached.detach();
+                }
+                assert(
+                    getScrollProgressDebugRegistryState().items.length === 0,
+                    'Ordinary items removed'
+                );
+                assert(
+                    document.querySelector('.m6-owned-palette'),
+                    'Owned palette survives tracker replacement'
+                );
+                assert(
+                    document.querySelector('.m6-owned-overlay'),
+                    'Owned overlay survives tracker replacement'
+                );
+
+                const live = keep(trackScrollProgress(target, { root }));
+                let liveDestroyed = false;
+                live.onDestroy(() => {
+                    liveDestroyed = true;
+                });
+                const detached = debug.addTracker(live);
+                detached.detach();
+                debug.addTracker(live);
+                detached.detach();
+                assert(
+                    getScrollProgressDebugRegistryState().items.length === 1,
+                    'Old handle cannot detach live reattachment'
+                );
+
+                for (const inverted of [false, true]) {
+                    root.scrollTop = 0;
+                    await settle();
+                    const local = keep(
+                        trackScrollProgress(target, {
+                            root,
+                            rootMargin: '400px',
+                            once: true,
+                            inverted
+                        })
+                    );
+                    let completed = false;
+                    local.onDestroy(() => {
+                        completed = true;
+                    });
+                    const label = `M6 once ${inverted}`;
+                    const registration = debug.addTracker(local, { label });
+                    root.scrollTop = 300;
+                    await until(() => completed);
+                    const snapshot = getScrollProgressDebugRegistryState().items.find(
+                        (item) => item.label === label
+                    );
+                    assert(snapshot?.completed, 'Once snapshot retained');
+                    near(snapshot.state.progress, inverted ? 0 : 1);
+                    rejectsDuplicate(local);
+                    if (!inverted) {
+                        registration.detach();
+                        assert(
+                            !getScrollProgressDebugRegistryState().items.some(
+                                (item) => item.id === snapshot.id
+                            ),
+                            'Detach removes completed snapshot'
+                        );
+                    }
+                }
+
+                const externalBridge = keep(
+                    debugScrollProgress(live, { label: 'M6 independent bridge' })
+                );
+                debug.destroy();
+                await settle();
+                assert(!liveDestroyed, 'Session does not destroy application tracker');
+                assert(!document.querySelector('.m6-owned-palette'), 'Owned palette removed');
+                assert(!document.querySelector('.m6-owned-overlay'), 'Owned overlay removed');
+                assert(
+                    document.querySelector('.m6-independent-palette'),
+                    'Independent palette remains'
+                );
+                assert(
+                    getScrollProgressDebugRegistryState().items.length === 1,
+                    'Only independent bridge remains after snapshot cleanup'
+                );
+                externalBridge.destroy();
+                assert(
+                    getScrollProgressDebugRegistryState().items.length === 0,
+                    'Independent owner removes its bridge'
+                );
+            } finally {
+                debug.destroy();
+                independent.destroy();
+            }
+        });
         await test('Native rAF error preserves another tracker and once cleanup (ordinary/inverted)', async () => {
             root.scrollTop = 200;
             root.scrollLeft = 0;
@@ -607,10 +731,22 @@ async function run() {
                     a.onDestroy(() => {
                         destroyed = true;
                     });
+                    const debug = keep(createScrollProgressDebugger());
+                    const registration = debug.addTracker(a, { label: 'Once callback error' });
                     const b = keep(trackScrollProgress(target, { root, rootMargin: '400px' }));
                     await until(() => destroyed && b.getState().isTracking);
                     assert(b.getConfig().once === false, 'Independent B retained');
                     near(a.getState().progress, inverted ? 0 : 1);
+                    const snapshot = getScrollProgressDebugRegistryState().items.find(
+                        (item) => item.label === 'Once callback error'
+                    );
+                    assert(
+                        snapshot?.completed,
+                        'Debugger retains once snapshot after application callback error'
+                    );
+                    near(snapshot.state.progress, inverted ? 0 : 1);
+                    registration.detach();
+                    debug.destroy();
                     b.destroy();
                 }
                 assert(caught === 2, 'Both expected rAF errors reached window');
