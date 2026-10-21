@@ -102,9 +102,11 @@ during construction.
 `0`–`1` are valid. Most element-entry effects use `start > end`, such as the
 default `0.8 → 0.4` range. `start <= end` is accepted and can be intentional when
 the target is larger than the root, such as a
-[page-length progress bar](recipes.md#reading-progress-bar), but each tracker warns
-once because the same configuration can produce a zero or negative travel distance
-for shorter targets.
+[page-length progress bar](recipes.md#reading-progress-bar). A tracker warns at most
+once in its lifetime when a measurement finds a non-positive travel distance
+(`D <= 0`; see [Geometry](#geometry)). Positive measured ranges do not warn,
+regardless of trigger order. An `update()` schedules a measurement; any resulting
+warning occurs in that frame, not synchronously inside `update()`.
 
 Use `inverted: true` when the desired geometry is correct but the exposed value
 should run in the opposite direction. Inversion returns `1 - progress`; it does not
@@ -613,6 +615,10 @@ progress = clamp((R × start − E) / D, 0, 1)
 ```
 
 When `D <= 0`, progress is `1` if `R × start − E > 0`, otherwise `0`.
+Trackers warn once on the first such measurement; later range, root, axis or
+inversion changes do not reset that allowance. Targets without a layout box do
+not warn until measurable; zero-size layout boxes are measured normally.
+`readScrollProgress()` uses the same fallback without logging warnings.
 
 `E` is the target's leading edge relative to the root's inner leading edge along
 the selected axis. For viewport and document roots, that reference is the top or
@@ -623,16 +629,23 @@ the supported geometry model.
 
 ## Notification and error behavior
 
-State and CSS are committed before notifications, including a pending root-leave
-callback. The order is pending root leave, current enter or leave, update callback,
-subscribers, then optional `once` cleanup. The pending leave describes departure
-from the old root; `getState()` already reflects the new root's committed state.
+State and CSS are committed before both the measured-range diagnostic and user
+notifications, including a pending root-leave callback. After that commit, the order
+is the optional measured-range diagnostic, pending root leave,
+current enter or leave, update callback, subscribers, then optional `once` cleanup.
+The pending leave describes departure from the old root; `getState()` already
+reflects the new root's committed state.
 Lifecycle transitions are recorded before invoking their callback, so a thrown
 callback does not repeat the same transition.
 
 Notifications are synchronous and fail fast. A callback error does not roll back
 committed state or CSS output. When `once` has already reached completion,
 cleanup still occurs before the first thrown value is propagated.
+
+The measured-range diagnostic safely skips unavailable `console.warn`. If a
+replacement logger throws, eligible notifications and `once` cleanup still run
+before its error is propagated. User notifications remain fail-fast; a later
+notification or cleanup error does not replace the earlier logger error.
 
 If a pending root-leave callback throws, an enter transition that was not delivered
 is reconsidered at the next requested update. No automatic retry is scheduled,

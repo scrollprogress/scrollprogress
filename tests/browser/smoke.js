@@ -85,6 +85,81 @@ async function run() {
             assert(called === 1, 'Immediate subscription');
             unsubscribe();
         });
+        await test('Measured non-positive range warning and step fallback', async () => {
+            const host = document.createElement('div');
+            const localTrackers = [];
+            const expectedTargets = new Set();
+            const warnings = [];
+            const unexpected = [];
+            const originalWarn = console.warn;
+            console.warn = (...args) => {
+                if (
+                    String(args[0]).includes('[scroll-progress]') &&
+                    String(args[0]).includes('D <= 0') &&
+                    expectedTargets.has(args[1])
+                ) {
+                    warnings.push(args);
+                } else {
+                    unexpected.push(args);
+                    originalWarn.apply(console, args);
+                }
+            };
+            const create = (element, options) => {
+                expectedTargets.add(element);
+                const local = keep(trackScrollProgress(element, options));
+                localTrackers.push(local);
+                return local;
+            };
+            const count = (element) => warnings.filter((args) => args[1] === element).length;
+            try {
+                document.body.append(host);
+                const story = document.createElement('div');
+                story.style.cssText = `position:fixed;top:-10px;left:0;width:50px;height:${window.innerHeight + 100}px`;
+                host.append(story);
+                const reading = create(story, { start: 0, end: 1 });
+                await settle();
+                assert(count(story) === 0, 'Tall reading-progress target stays silent');
+                story.style.height = '50px';
+                reading.update({});
+                await settle();
+                assert(count(story) === 1, 'Short reading-progress target warns once');
+                near(reading.getState().progress, 1);
+                assert(
+                    warnings.find((args) => args[1] === story)[3] === 50 - window.innerHeight,
+                    'Logged distance uses measured viewport height'
+                );
+
+                const panel = document.createElement('div');
+                panel.style.cssText =
+                    'position:fixed;top:0;left:0;width:200px;height:100px;border:10px solid;overflow:auto';
+                panel.innerHTML =
+                    '<div style="width:1000px;height:100px;position:relative"><div style="position:relative;left:-10px;width:100px;height:20px"></div><div style="display:none;position:relative;left:-10px;width:50px;height:20px"></div></div>';
+                host.append(panel);
+                const [horizontal, hidden] = panel.firstElementChild.children;
+                const x = create(horizontal, { root: panel, axis: 'x', start: 0, end: 1 });
+                const revealed = create(hidden, { root: panel, axis: 'x', start: 0, end: 1 });
+                assert(count(horizontal) === 1, 'Bordered horizontal root warns at creation');
+                near(x.getState().progress, 1);
+                assert(count(hidden) === 0, 'Boxless target stays silent');
+                hidden.style.display = 'block';
+                revealed.update({});
+                await settle();
+                assert(count(hidden) === 1, 'Revealed measurable target warns');
+                near(revealed.getState().progress, 1);
+                for (const local of localTrackers) local.update({});
+                panel.scrollLeft = 20;
+                await settle();
+                assert(warnings.length === 3, 'Repeated measurements do not repeat warnings');
+                assert(unexpected.length === 0, 'No unexpected diagnostics');
+            } finally {
+                try {
+                    for (const local of localTrackers) local.destroy();
+                } finally {
+                    console.warn = originalWarn;
+                    host.remove();
+                }
+            }
+        });
         await test('Hidden, detached and boxless targets preserve progress and once', async () => {
             const sample = document.createElement('div');
             sample.style.cssText = 'width:50px;height:50px';
