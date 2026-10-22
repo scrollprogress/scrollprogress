@@ -38,6 +38,7 @@ function createPlaygroundFixture(t) {
     mkdirSync(playground);
     copyFileSync(join(repository, 'vite.config.ts'), configFile);
     copyFileSync(join(repository, 'package.json'), join(directory, 'package.json'));
+    copyFileSync(join(repository, 'playground/package.json'), join(playground, 'package.json'));
     cpSync(join(repository, 'playground/tooling'), join(playground, 'tooling'), {
         recursive: true
     });

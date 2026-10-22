@@ -1,12 +1,14 @@
 import type { ScrollProgressTracker } from '../../types.js';
+import { createDebugBridge, type DebugBridgeTermination } from '../bridge.js';
+import { runDebugCleanup } from '../cleanup.js';
 
 import {
     createDebugConsoleLogger,
     type ScrollProgressDebugConsoleLoggerOptions
 } from '../console/console-logger.js';
-import {
-    debugScrollProgress,
-    type ScrollProgressDebugBridgeOptions
+import type {
+    ScrollProgressDebugBridgeController,
+    ScrollProgressDebugBridgeOptions
 } from '../debug-scroll-progress.js';
 import { createDebugOverlay, type ScrollProgressDebugOverlayOptions } from '../overlay/overlay.js';
 import { createDebugPalette, type ScrollProgressDebugPaletteOptions } from '../palette/palette.js';
@@ -46,6 +48,19 @@ interface DestroyableController {
     destroy: () => void;
 }
 
+interface TrackerRegistration {
+    bridge: ScrollProgressDebugBridgeController | null;
+    terminal: DebugBridgeTermination | null;
+    detached: boolean;
+}
+
+interface DebuggerOwner {
+    destroyed: boolean;
+    trackerIndex: WeakMap<ScrollProgressTracker, TrackerRegistration>;
+    registrations: Set<TrackerRegistration>;
+    tools: DestroyableController[];
+}
+
 export function createScrollProgressDebugger(
     tracker: ScrollProgressTracker,
     options?: ScrollProgressDebuggerSingleTrackerOptions
@@ -69,63 +84,16 @@ export function createScrollProgressDebugger(
           ]
         : (trackerOrOptions.trackers ?? []);
 
-    let isDestroyed = false;
-    const trackerControllers = new Map<
-        ScrollProgressTracker,
-        ScrollProgressDebuggerTrackerController
-    >();
-    const toolControllers: DestroyableController[] = [];
-
-    function addTracker(
-        tracker: ScrollProgressTracker,
-        trackerOptions: ScrollProgressDebugBridgeOptions = {}
-    ): ScrollProgressDebuggerTrackerController {
-        if (isDestroyed) {
-            throw new Error('Cannot add a tracker to a destroyed scrollprogress debugger');
-        }
-        if (trackerControllers.has(tracker)) {
-            throw new Error('Tracker is already attached to this scrollprogress debugger');
-        }
-
-        const bridge = debugScrollProgress(tracker, trackerOptions);
-        let isDetached = false;
-
-        const trackerController: ScrollProgressDebuggerTrackerController = {
-            detach() {
-                if (isDetached) {
-                    return;
-                }
-
-                isDetached = true;
-                trackerControllers.delete(tracker);
-                bridge.destroy();
-            }
-        };
-
-        trackerControllers.set(tracker, trackerController);
-
-        return trackerController;
-    }
-
-    function destroy(): void {
-        if (isDestroyed) {
-            return;
-        }
-
-        isDestroyed = true;
-
-        for (const controller of toolControllers.splice(0).reverse()) {
-            controller.destroy();
-        }
-
-        for (const controller of Array.from(trackerControllers.values())) {
-            controller.detach();
-        }
-    }
+    const owner: DebuggerOwner = {
+        destroyed: false,
+        trackerIndex: new WeakMap(),
+        registrations: new Set(),
+        tools: []
+    };
 
     try {
         for (const registration of initialTrackers) {
-            addTracker(registration.tracker, {
+            addDebuggerTracker(owner, registration.tracker, {
                 debugId: registration.debugId,
                 label: registration.label
             });
@@ -133,27 +101,130 @@ export function createScrollProgressDebugger(
 
         const paletteOptions = resolveToolOptions(options.palette);
         if (paletteOptions) {
-            toolControllers.push(createDebugPalette(paletteOptions));
+            owner.tools.push(createDebugPalette(paletteOptions));
         }
 
         const overlayOptions = resolveToolOptions(options.overlay);
         if (overlayOptions) {
-            toolControllers.push(createDebugOverlay(overlayOptions));
+            owner.tools.push(createDebugOverlay(overlayOptions));
         }
 
         const consoleOptions = resolveToolOptions(options.console);
         if (consoleOptions) {
-            toolControllers.push(createDebugConsoleLogger(consoleOptions));
+            owner.tools.push(createDebugConsoleLogger(consoleOptions));
         }
     } catch (error) {
-        destroy();
+        try {
+            destroyDebugger(owner);
+        } catch {
+            // Preserve the failure that prevented session construction.
+        }
         throw error;
     }
 
+    return createDebuggerController(owner);
+}
+
+function createDebuggerController(owner: DebuggerOwner): ScrollProgressDebuggerController {
     return {
-        addTracker,
-        destroy
+        addTracker(tracker, options = {}) {
+            return addDebuggerTracker(owner, tracker, options);
+        },
+        destroy() {
+            destroyDebugger(owner);
+        }
     };
+}
+
+function addDebuggerTracker(
+    owner: DebuggerOwner,
+    tracker: ScrollProgressTracker,
+    options: ScrollProgressDebugBridgeOptions
+): ScrollProgressDebuggerTrackerController {
+    if (owner.destroyed) {
+        throw new Error('Cannot add a tracker to a destroyed scrollprogress debugger');
+    }
+    const existing = owner.trackerIndex.get(tracker);
+    if (existing && !existing.detached) {
+        throw new Error('Tracker is already attached to this scrollprogress debugger');
+    }
+
+    const registration: TrackerRegistration = { bridge: null, terminal: null, detached: false };
+    owner.trackerIndex.set(tracker, registration);
+    owner.registrations.add(registration);
+
+    try {
+        const bridge = createDebugBridge(
+            tracker,
+            options,
+            createTerminationHook(owner, registration)
+        );
+        if (registration.detached || registration.terminal === 'ordinary' || owner.destroyed) {
+            bridge.destroy();
+        } else {
+            registration.bridge = bridge;
+        }
+    } catch (error) {
+        try {
+            detachRegistration(owner, registration);
+        } catch {
+            // A failed addition must preserve its construction error.
+        }
+        throw error;
+    }
+
+    return createRegistrationController(owner, registration);
+}
+
+function createRegistrationController(
+    owner: DebuggerOwner,
+    registration: TrackerRegistration
+): ScrollProgressDebuggerTrackerController {
+    return {
+        detach() {
+            detachRegistration(owner, registration);
+        }
+    };
+}
+
+function createTerminationHook(
+    owner: DebuggerOwner,
+    registration: TrackerRegistration
+): (reason: DebugBridgeTermination) => void {
+    return (reason) => {
+        registration.terminal = reason;
+        if (reason === 'ordinary') {
+            owner.registrations.delete(registration);
+            const bridge = registration.bridge;
+            registration.bridge = null;
+            bridge?.destroy();
+        }
+    };
+}
+
+function detachRegistration(owner: DebuggerOwner, registration: TrackerRegistration): void {
+    if (registration.detached) return;
+
+    registration.detached = true;
+    owner.registrations.delete(registration);
+    const bridge = registration.bridge;
+    registration.bridge = null;
+    bridge?.destroy();
+}
+
+function destroyDebugger(owner: DebuggerOwner): void {
+    if (owner.destroyed) return;
+
+    owner.destroyed = true;
+    owner.trackerIndex = new WeakMap();
+    const tools = owner.tools.splice(0).reverse();
+    const registrations = [...owner.registrations];
+    owner.registrations.clear();
+
+    runDebugCleanup([
+        ...tools.map((tool) => () => tool.destroy()),
+        ...registrations.map((registration) => () => detachRegistration(owner, registration))
+    ]);
 }
 
 function isScrollProgressTracker(

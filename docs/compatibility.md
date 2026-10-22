@@ -3,6 +3,14 @@
 ScrollProgress is an ESM-only browser library. It has no CommonJS build, runtime
 dependencies or bundled polyfills.
 
+## Bundling
+
+The package declares `"sideEffects": ["**/*.css"]`. Supporting bundlers may remove
+unused JavaScript modules while retaining explicitly imported CSS themes. Used
+functions and debug constructors retain their behavior, including embedded default
+styles. Optional themes still require an explicit CSS import. Output size depends
+on usage and bundler configuration; this metadata does not itself minify code.
+
 ## Browser target
 
 The production build targets:

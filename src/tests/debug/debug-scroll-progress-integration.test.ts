@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { debugScrollProgress } from '../../lib/debug/debug-scroll-progress';
 import {
@@ -184,6 +184,30 @@ describe('debugScrollProgress integration', () => {
         debugScrollProgress(tracker);
         tracker.destroy();
 
+        expect(getScrollProgressDebugRegistryState().items).toEqual([]);
+    });
+
+    it('preserves an earlier application error when terminal bridge cleanup also fails', () => {
+        setupScrollProgressTestMocks();
+        setWindowValue('innerHeight', 1000);
+        const applicationError = new Error('application failed');
+        const bridgeError = new Error('final bridge read failed');
+        tracker = trackScrollProgress(createElementWithRect({ top: 100, height: 300 }), {
+            once: true,
+            onEnter() {
+                throw applicationError;
+            }
+        });
+        const bridge = debugScrollProgress(tracker);
+        vi.spyOn(tracker, 'getConfig').mockImplementationOnce(() => {
+            throw bridgeError;
+        });
+        const laterDestroy = vi.fn();
+        tracker.onDestroy(laterDestroy);
+        getLatestIntersectionObserver().trigger(true);
+        expect(() => runAnimationFrame()).toThrow(applicationError);
+        expect(laterDestroy).toHaveBeenCalledOnce();
+        bridge.destroy();
         expect(getScrollProgressDebugRegistryState().items).toEqual([]);
     });
 

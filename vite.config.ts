@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { playgroundDemoIncludes } from './playground/tooling/vite/demo-includes';
 import { playgroundDemoJavaScript } from './playground/tooling/vite/demo-javascript';
+import { validateDemoRetention } from './playground/tooling/vite/demo-retention';
 import { validatePlaygroundOutput } from './playground/tooling/vite/validate-output';
 
 const playgroundDirectory = fileURLToPath(new URL('./playground', import.meta.url));
@@ -29,7 +30,8 @@ export default defineConfig({
         playgroundDemoJavaScript(),
         playgroundDemoIncludes(playgroundDirectory),
         tailwindcss(),
-        validatePlaygroundOutput(playgroundDirectory)
+        validatePlaygroundOutput(playgroundDirectory),
+        validateDemoRetention(playgroundDirectory)
     ],
 
     resolve: {

@@ -1,7 +1,13 @@
+import { consumerCandidateMetadata } from './candidate-identity.mjs';
+import { buildConsumerThemes } from './consumer-theme-builds.mjs';
 import {
-    BROWSER_FIXTURE_FILES,
-    BENCHMARK_FIXTURE_FILES,
-    hashFixtureFiles
+    consumerBundleCases,
+    bundleOutput,
+    assertConsumerBundle
+} from './consumer-bundle-cases.mjs';
+import {
+    copyFixtureFiles,
+    fixtureIdentity
 } from '../tests/browser/tooling/browser-fixture-hash.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -120,6 +126,7 @@ assert.equal(
 const installedPackage = JSON.parse(readFileSync(path.join(installed, 'package.json'), 'utf8'));
 assert.equal(installedPackage.name, pkg.name);
 assert.equal(installedPackage.version, pkg.version);
+assert.deepEqual(installedPackage.sideEffects, ['**/*.css']);
 assert(!installedPackage.dependencies || Object.keys(installedPackage.dependencies).length === 0);
 for (const entry of Object.values(installedPackage.exports)) {
     if (typeof entry === 'string') {
@@ -244,17 +251,9 @@ for (const compiler of typescriptCompilers) {
         command(process.execPath, [tsc, '--project', config]);
     }
 }
-const cases = {
-    core: `import * as api from '${pkg.name}'; globalThis.scrollprogress = api;`,
-    registry: `import * as api from '${pkg.name}/debug/registry'; globalThis.scrollprogress = api;`,
-    bridge: `import * as api from '${pkg.name}/debug'; globalThis.scrollprogress = api;`,
-    console: `import * as api from '${pkg.name}/debug/console'; globalThis.scrollprogress = api;`,
-    palette: `import * as api from '${pkg.name}/debug/palette'; globalThis.scrollprogress = api;`,
-    overlay: `import * as api from '${pkg.name}/debug/overlay'; globalThis.scrollprogress = api;`,
-    session: `import * as api from '${pkg.name}/debug/session'; globalThis.scrollprogress = api;`,
-    theme: `import '${pkg.name}/debug/themes/neon-grid.css'; globalThis.scrollprogressTheme = 'neon-grid';`,
-    combined: `import * as core from '${pkg.name}'; import * as debug from '${pkg.name}/debug'; import * as registry from '${pkg.name}/debug/registry'; import * as palette from '${pkg.name}/debug/palette'; import * as overlay from '${pkg.name}/debug/overlay'; import * as session from '${pkg.name}/debug/session'; globalThis.scrollprogress = {core, debug, registry, palette, overlay, session};`
-};
+const cases = consumerBundleCases(pkg.name);
+const controls = {};
+const probeResults = {};
 const sizes = {};
 for (const [name, source] of Object.entries(cases)) {
     const input = path.join(directory, `${name}.js`);
@@ -274,44 +273,21 @@ for (const [name, source] of Object.entries(cases)) {
                 sourcemap: false
             }
         });
-        const chunks = result.output.filter((item) => item.type === 'chunk');
-        assert.equal(chunks.length, 1, 'These static imports should produce one bundle');
-        const code = chunks.map((chunk) => chunk.code).join('\n');
-        const css = result.output
-            .filter((item) => item.type === 'asset' && item.fileName.endsWith('.css'))
-            .map((asset) => String(asset.source))
-            .join('\n');
-        const bundledSource = `${code}\n${css}`;
-
-        if (name === 'core')
-            assert(
-                !/scroll-progress-debug|spdp-|spdo-|console\.table/.test(code),
-                'Core bundles debug'
-            );
-
-        if (name === 'theme') {
-            assert(/data-scroll-progress-debug-theme=(?:['"])?neon-grid(?:['"])?/.test(css));
-            assert(css.includes('--sp-debug-palette-accent'));
-            assert(css.includes('--sp-debug-overlay-target-color'));
-        } else {
-            assert(
-                !/data-scroll-progress-debug-theme=['"](?:neon-grid|paper)['"]/.test(bundledSource),
-                `${name} bundles optional debug themes`
-            );
-        }
+        const { code, bundledSource } = bundleOutput(result.output);
+        const mode = minify ? 'minified' : 'unminified';
+        if (name === 'control') controls[mode] = code;
+        probeResults[`${name}:${mode}`] = assertConsumerBundle(name, result.output, controls[mode]);
 
         sizes[name][minify ? 'minified' : 'unminified'] = Buffer.byteLength(bundledSource);
         if (minify) sizes[name].gzip = gzipSync(bundledSource, { level: 9 }).length;
     }
 }
 
+const productionThemes = await buildConsumerThemes(directory, pkg.name);
+
 // Copy the committed browser fixture so every browser import resolves from this
 // real installation. No repository source aliases or package symlinks are used.
-mkdirSync(path.join(directory, 'browser'));
-for (const file of BROWSER_FIXTURE_FILES) {
-    const contents = readFileSync(path.join(repository, 'tests/browser', file));
-    writeFileSync(path.join(directory, 'browser', file), contents);
-}
+copyFixtureFiles(path.join(repository, 'tests/browser'), path.join(directory, 'browser'));
 const report = {
     time: new Date().toISOString(),
     node: process.version,
@@ -341,10 +317,16 @@ const report = {
             `TypeScript ${version} NodeNext`
         ]),
         'consumer bundles',
-        'optional CSS theme export',
+        'installed sideEffects CSS declaration',
+        'both optional CSS theme exports and production HTML links',
+        'unused runtime entries match marker-only controls',
+        'reader executes without tracker/debug code',
         'core excludes debug'
     ],
     sizes,
+    probeResults,
+    productionThemes,
+    ...consumerCandidateMetadata(options, repository),
     pending: [
         'physical iOS Safari / Android Chrome viewport x',
         ...(pkg.private ? ['npm scope permissions and publication authorization'] : [])
@@ -358,11 +340,7 @@ writeFileSync(
             sha256: report.sha256,
             mode: report.mode,
             preparedAt: report.time,
-            fixtureSha256: hashFixtureFiles(path.join(repository, 'tests/browser')),
-            benchmarkFixtureSha256: hashFixtureFiles(
-                path.join(repository, 'tests/browser'),
-                BENCHMARK_FIXTURE_FILES
-            )
+            ...fixtureIdentity(path.join(repository, 'tests/browser'))
         },
         null,
         2
@@ -402,6 +380,7 @@ if (!options.serve) {
         console.log(`  Smoke tests:  ${base}`);
         console.log(`  Manual checks: ${new URL('manual.html', base).href}`);
         console.log(`  Benchmarks:    ${new URL('benchmark.html', base).href}`);
+        console.log(`  Diagnostics:   ${new URL('scroll-sync-diagnostic.html', base).href}`);
     }
     console.log('\nKeep this terminal open. Press Ctrl+C to stop.');
     console.log(

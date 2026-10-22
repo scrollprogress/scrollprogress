@@ -1,6 +1,6 @@
 import {
     BROWSER_FIXTURE_FILES,
-    BENCHMARK_FIXTURE_FILES,
+    fixtureIdentity,
     hashFixtureFiles
 } from '../browser-fixture-hash.mjs';
 import { createHash } from 'node:crypto';
@@ -36,8 +36,7 @@ export function localBrowserPackageInfo({
             sha256: hash.digest('hex'),
             mode: 'local-build',
             preparedAt: new Date().toISOString(),
-            fixtureSha256: hashFixtureFiles(browserDirectory),
-            benchmarkFixtureSha256: hashFixtureFiles(browserDirectory, BENCHMARK_FIXTURE_FILES)
+            ...fixtureIdentity(browserDirectory)
         };
     }
 

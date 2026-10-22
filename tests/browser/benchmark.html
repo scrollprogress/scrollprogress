@@ -5,7 +5,7 @@
     content="width=device-width, initial-scale=1"
   /><title>ScrollProgress baseline</title>
   <style>
-    body{font:16px system-ui;margin:24px}button{font:inherit;padding:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:16px}.actions+button{margin-left:8px}details{margin-block:16px}summary{cursor:pointer;font-weight:600}.table-scroll{overflow-x:auto;margin-block:12px}table{border-collapse:collapse;min-width:900px;width:100%}th,td{border-bottom:1px solid #ccd;padding:8px;text-align:left;white-space:nowrap}th{background:#f4f5f7}td:first-child{white-space:normal}pre{white-space:pre-wrap}#fixture{height:240px;width:min(500px,90vw);overflow:auto;border:1px solid #345;position:relative}#benchmark-content{position:relative;height:800px}.target{position:absolute;top:100px;left:0;width:100px;height:100px}
+    body{font:16px system-ui;margin:24px}a{margin-right:12px}button{font:inherit;padding:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:16px}.actions+button{margin-left:8px}details{margin-block:16px}summary{cursor:pointer;font-weight:600}.table-scroll{overflow-x:auto;margin-block:12px}table{border-collapse:collapse;min-width:900px;width:100%}th,td{border-bottom:1px solid #ccd;padding:8px;text-align:left;white-space:nowrap}th{background:#f4f5f7}td:first-child{white-space:normal}pre{white-space:pre-wrap}#fixture{height:240px;width:min(500px,90vw);overflow:auto;border:1px solid #345;position:relative}#benchmark-content{position:relative;height:800px}.target{position:absolute;top:100px;left:0;width:100px;height:100px}
   </style>
   <h1>ScrollProgress performance baseline</h1>
   <p>Native DOM, no timing pass/fail thresholds. Keep this tab foreground and DevTools closed.</p>
@@ -21,6 +21,7 @@
     <button type="button" data-benchmark-suite="all">Run all</button>
   </div>
   <a href="index.html">Smoke</a
+  ><a href="scroll-sync-diagnostic.html">Scroll-sync diagnostics</a
   ><button id="save-report" disabled>Save report (JSON)</button>
   <p id="report-status" role="status">Report tools loading…</p>
   <details>

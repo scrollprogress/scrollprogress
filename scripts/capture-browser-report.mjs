@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, readdirSync, renameSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { captureThemes } from './capture-themes.mjs';
 import { getBenchmarkScenarios } from '../tests/browser/benchmark-scenarios.js';
 
 const [
@@ -12,12 +13,77 @@ const [
     suite,
     run = '01',
     base = 'http://127.0.0.1:4175',
-    endpoint = 'http://127.0.0.1:9222'
+    endpoint = 'http://127.0.0.1:9222',
+    consumer
 ] = process.argv.slice(2);
 assert(
     phase && suite,
-    'Usage: node scripts/capture-browser-report.mjs A scroll-sync 01 [base] [CDP endpoint]'
+    'Usage: node scripts/capture-browser-report.mjs <phase> <suite: scroll-sync|core|debug|all|smoke|themes> [run] [base-url] [CDP endpoint] [consumer-directory: required for themes]'
 );
+async function connect(url, options = {}) {
+    const socket = new WebSocket(url);
+    const timeoutMs = options.timeoutMs ?? 0;
+    let timer;
+    try {
+        await new Promise((resolve, reject) => {
+            socket.onopen = resolve;
+            socket.onerror = reject;
+            if (timeoutMs)
+                timer = setTimeout(
+                    () => reject(new Error(`Chrome connection timed out: ${url}`)),
+                    timeoutMs
+                );
+        });
+    } catch (error) {
+        socket.close();
+        throw error;
+    } finally {
+        clearTimeout(timer);
+    }
+    let id = 0;
+    const pending = new Map();
+    socket.onmessage = ({ data }) => {
+        const message = JSON.parse(data);
+        if (message.id) {
+            const pair = pending.get(message.id);
+            pending.delete(message.id);
+            if (pair) {
+                clearTimeout(pair.timer);
+                if (message.error) pair.reject(new Error(JSON.stringify(message.error)));
+                else pair.resolve(message.result);
+            }
+        } else options.onEvent?.(message);
+    };
+    if (timeoutMs)
+        socket.onclose = () => {
+            for (const pair of pending.values()) {
+                clearTimeout(pair.timer);
+                pair.reject(new Error('Chrome connection closed'));
+            }
+            pending.clear();
+        };
+    return {
+        socket,
+        send(method, params = {}, requestTimeout = timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const requestId = ++id;
+                const pair = { resolve, reject };
+                if (requestTimeout)
+                    pair.timer = setTimeout(() => {
+                        pending.delete(requestId);
+                        reject(new Error(`Chrome request timed out: ${method}`));
+                    }, requestTimeout);
+                pending.set(requestId, pair);
+                socket.send(JSON.stringify({ id: requestId, method, params }));
+            });
+        }
+    };
+}
+if (suite === 'themes') {
+    await captureThemes({ phase, run, base, endpoint, consumer }, connect);
+    process.exit(0);
+}
+assert(['scroll-sync', 'core', 'debug', 'all', 'smoke'].includes(suite), 'Unknown capture suite');
 const trackedStatus = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
     encoding: 'utf8'
 }).trim();
@@ -28,33 +94,6 @@ const reports = path.resolve('test-results/reports');
 mkdirSync(downloads, { recursive: true });
 mkdirSync(reports, { recursive: true });
 const version = await (await fetch(`${endpoint}/json/version`)).json();
-async function connect(url) {
-    const socket = new WebSocket(url);
-    await new Promise((resolve, reject) => {
-        socket.onopen = resolve;
-        socket.onerror = reject;
-    });
-    let id = 0;
-    const pending = new Map();
-    socket.onmessage = ({ data }) => {
-        const message = JSON.parse(data);
-        if (message.id) {
-            const pair = pending.get(message.id);
-            pending.delete(message.id);
-            if (message.error) pair.reject(new Error(JSON.stringify(message.error)));
-            else pair.resolve(message.result);
-        }
-    };
-    return {
-        socket,
-        send(method, params = {}) {
-            return new Promise((resolve, reject) => {
-                pending.set(++id, { resolve, reject });
-                socket.send(JSON.stringify({ id, method, params }));
-            });
-        }
-    };
-}
 const browser = await connect(version.webSocketDebuggerUrl);
 let tab;
 let page;
@@ -115,7 +154,7 @@ try {
     assert.equal(report.status, smoke ? 'passed' : 'complete', JSON.stringify(report));
     assert.equal(report.schemaVersion, 1);
     if (!smoke) {
-        assert.equal(report.benchmarkVersion, 4);
+        assert.equal(report.benchmarkVersion, 5);
         assert.deepEqual(report.warnings, []);
         assert.deepEqual(
             report.scenarioIds,

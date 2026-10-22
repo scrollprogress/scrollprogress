@@ -21,8 +21,25 @@ Follow the private reporting instructions in [SECURITY.md](SECURITY.md).
 
 ## Development workflow
 
-`main` is the release-ready branch. Create a short-lived branch for each focused
-change and open a pull request against `main`.
+`main` is the release-ready branch. `dev` is a permanent integration branch for
+collecting changes before they are ready to enter `main` together.
+
+Contributors with repository write access may push directly to `dev` or create
+focused branches from it and squash-merge them locally into `dev`, without an
+intermediate pull request. Create each subsequent branch from the updated `dev`
+when it depends on previously integrated work.
+
+Every push to `dev` runs `npm run verify` and `npm run play:build` through GitHub
+Actions. These checks run after the push; changes on `dev` may still be incomplete
+or fail verification. When a group of changes is ready, open a pull request from
+`dev` to `main` and use a merge commit to preserve the shared history. After it is
+merged, merge the updated `main` back into `dev` before starting the next cycle.
+Keep `dev` for subsequent development; do not recreate it after each integration.
+
+Direct pull requests against `main` are also welcome for focused, ready-to-integrate
+changes. These pull requests are squash-merged. After merging one, bring the
+updated `main` into `dev` so both branches include the change. All pull requests
+run the same automated checks.
 
 Use descriptive branch names such as:
 
@@ -32,7 +49,7 @@ docs/update-lifecycle-guide
 test/mobile-horizontal-tracking
 ```
 
-Pull requests are squash-merged. The resulting commit message must follow
+Commit messages, including squash and merge commit messages, must follow
 Conventional Commits and be written in English, for example:
 
 ```text

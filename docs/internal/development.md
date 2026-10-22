@@ -24,6 +24,19 @@ that the packaged library contains everything an external application needs.
 
 Run all commands below from the repository root.
 
+The private `playground/package.json` declares `sideEffects: true` because importing
+a demo initializes it. This boundary keeps the library's CSS-only sideEffects
+declaration from removing demo initialization in production builds. Continue using
+one root `npm ci`, the root lockfile and the commands below; the playground has no
+separate dependency installation, lockfile or node_modules directory.
+
+Production builds also check that each page retains executable demo selectors.
+Displayed source strings in the code viewer do not satisfy that check. The general
+TypeScript check maps public imports to built declarations across package scopes;
+the playground-specific configuration continues mapping its imports to source.
+The library configuration clears those paths, so library and declaration builds
+cannot resolve public self-imports to their own dist output.
+
 ### Development
 
 ```sh

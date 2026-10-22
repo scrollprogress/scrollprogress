@@ -366,7 +366,7 @@ async function runSuite(suiteId) {
     window.addEventListener('resize', onResize);
 
     const details = () => ({
-        benchmarkVersion: 4,
+        benchmarkVersion: 5,
         suite: suiteId,
         scenarioIds: scenarios.map((scenario) => scenario.id),
         frames,
