@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>ScrollProgress scroll-sync diagnostic</title>
+  <style>
+    body{font:16px system-ui;margin:24px}button{font:inherit;padding:10px}nav a{margin-right:16px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:16px;align-items:center}details{margin-block:16px}summary{cursor:pointer;font-weight:600}.table-scroll{overflow-x:auto;margin-block:12px}table{border-collapse:collapse;min-width:900px;width:100%}th,td{border-bottom:1px solid #ccd;padding:8px;text-align:left;white-space:nowrap}th{background:#f4f5f7}td:first-child,td:last-child{white-space:normal}pre{white-space:pre-wrap}#fixture{height:240px;width:min(500px,90vw);overflow:auto;border:1px solid #345;position:relative}#benchmark-content{position:relative;height:800px}
+  </style>
+  <nav><a href="index.html">Smoke</a><a href="benchmark.html">Performance baseline</a></nav>
+  <h1>ScrollProgress scroll-sync diagnostic</h1>
+  <p>
+    Repeats the <code>scroll-sync-viewport-300-transform</code> workload of the performance baseline
+    and records geometry reads, scroll offsets and callback progress. The outcome describes this run
+    in this browser only; it is not a performance measurement or a release decision. Keep this tab
+    foreground and DevTools closed.
+  </p>
+  <p>
+    Start with <code>npm run consumer:browser</code> in the repository and open the printed HTTP
+    link. Opening this HTML file directly does not run the diagnostic.
+  </p>
+  <div class="actions">
+    <label><input type="checkbox" id="record-trace" checked /> Record trace</label>
+    <label
+      ><input type="checkbox" id="run-preamble" /> Run the preceding viewport scroll-sync scenarios
+      first (untraced)</label
+    >
+    <button type="button" id="run-trace">Run diagnostic</button>
+  </div>
+  <button id="save-report" disabled>Save report (JSON)</button>
+  <p id="report-status" role="status">Report tools loading…</p>
+  <details>
+    <summary>Report details: browser, device and notes</summary>
+    <fieldset id="report-controls">
+      <legend>Fill in actual versions; the user agent may be incomplete.</legend>
+    </fieldset>
+  </details>
+  <div id="fixture"><div id="benchmark-content"></div></div>
+  <details open>
+    <summary>Diagnostic summary</summary>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Mode</th>
+            <th>Deliveries</th>
+            <th>Reads/frame</th>
+            <th>Outcome</th>
+            <th>Reasons</th>
+          </tr>
+        </thead>
+        <tbody id="trace-summary">
+          <tr>
+            <td colspan="6">Run the diagnostic to see results.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Full JSON report</summary>
+    <pre id="results">Ready</pre>
+  </details>
+  <script type="module" src="./diagnostics/scroll-sync-trace.js"></script>
+</html>

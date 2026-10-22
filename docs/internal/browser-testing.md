@@ -16,7 +16,7 @@ are not included in the npm package or the library JavaScript.
 | `playground/`                                  | Development app that uses the library source. It has no package.json of its own and shares the root tools.                 |
 | `dist/`                                        | Built library, ready to be included in the npm package.                                                                    |
 | `playground/dist/`                             | Playground build, generated only by `npm run play:build`.                                                                  |
-| `tests/browser/`                               | Sources for the three test pages. Keep these in Git and edit them instead of generated copies.                             |
+| `tests/browser/`                               | Sources for the browser test pages. Keep these in Git and edit them instead of generated copies.                           |
 | `test-results/consumer/`                       | Small generated project used to test package installation. It is replaced by the next run.                                 |
 | `test-results/consumer/node_modules/`          | Real tarball installation of the library, separate from the root installation. It is not linked to `src`.                  |
 | `test-results/consumer/browser/`               | Copy of the test pages served over HTTP by Vite.                                                                           |
@@ -195,8 +195,12 @@ scenario results; the separate JSON view is the full report.
 
 ### Suites and workloads
 
-The current procedure is `benchmarkVersion: 4`. Do not mix version 3 reports into
-v4 comparisons. Scenario definitions are in `tests/browser/benchmark-scenarios.js`.
+The current procedure is `benchmarkVersion: 5`. Version 5 keeps the v4 scenario
+definitions and workloads; it changes the benchmark page only by adding navigation
+to the scroll-sync diagnostic, so its benchmark hash differs from v4. Relate v4 and
+v5 reports with that difference recorded and do not pool them into one baseline. Do
+not mix version 3 reports into later comparisons. Scenario definitions are in
+`tests/browser/benchmark-scenarios.js`.
 
 - **Core baseline**: 1, 100 and 300 trackers, plus one tracker with 1,000 subscribers.
   IDs are `core-1`, `core-100`, `core-300` and `core-1-subscribers-1000`.
@@ -258,12 +262,14 @@ guarantees that no frames were missed. Profiling is a separate diagnostic activi
 
 `benchmarkFixtureSha256` hashes benchmark.html, benchmark.js, benchmark-fixture.js,
 benchmark-scenarios.js, benchmark-metrics.js and reporting.js. Freeze these files
-across a comparison. Both package-info generators use the shared explicit file
-lists in `tests/browser/tooling/browser-fixture-hash.mjs`.
+across a comparison. `diagnosticFixtureSha256` hashes the scroll-sync diagnostic
+page and modules plus the shared workload modules it imports. Both package-info
+generators use the shared explicit file lists in
+`tests/browser/tooling/browser-fixture-hash.mjs`.
 
-In v4, `fixtureSha256` hashes the explicit browser fixture list rather than scanning
-the directory. Smoke changes may change this hash without affecting the benchmark
-hash. The artifact SHA-256 identifies the local distribution plus fixture, or the
+`fixtureSha256` hashes the explicit browser fixture list rather than scanning the
+directory; since v5 the list includes the diagnostic files. Smoke or diagnostic
+changes may change this hash without affecting the benchmark hash. The artifact SHA-256 identifies the local distribution plus fixture, or the
 installed tarball, according to mode. `schemaVersion` remains 1 and metadata is
 included under the report's artifact object.
 
@@ -286,6 +292,35 @@ The automated capture tool uses headless Chrome, 1280x900, DPR 1 and DevTools
 Protocol CPU throttling 4x, without a Performance trace. Headless measurements are
 comparative diagnostics, not physical-device certification. Classic core runs can
 serve as an additional control alongside scroll-sync comparisons.
+
+### Scroll-sync diagnostic
+
+**Scroll-sync diagnostics**, linked from the smoke and performance pages, repeats the
+`scroll-sync-viewport-300-transform` workload in whichever browser opens it and
+records every geometry read, the offset written by the runner and each `onUpdate`
+progress. It is not part of **Run all**, is not captured by the automated tool and
+does not score performance. Its timings include tracing overhead; compare them
+neither with uninstrumented benchmark runs nor with a future per-frame CPU metric.
+
+The analysis reports one run-local `outcome`:
+
+- `issue-observed`: usable data shows a missing or mismatched callback, a scroll
+  offset or geometry that disagrees with the runner, frozen geometry, or a settled
+  state that differs from the target's position;
+- `inconclusive`: the trace is unusable, a check could not be assessed, or a tracker
+  left more than two consecutive runner frames of motion unobserved;
+- `no-issue-observed`: nothing was found under the recorded conditions.
+
+No outcome is a release decision or identifies a browser mechanism or library defect
+by itself. Its references assume the fixed 20px targets, the recorded viewport height
+and a 1 CSS pixel tolerance. Replay a saved report with the current analysis, without
+modifying it, using `node scripts/analyze-scroll-sync-trace.mjs <report.json>`. Its
+`evidence.usable` is false for a failed capture, a metadata error, missing package
+identity or any capture warning such as a resize; such a capture is not evidence,
+whatever the analyzed values show.
+`node scripts/prepare-scroll-sync-trace.mjs --check` verifies an installed consumer
+byte for byte against its tarball and the checkout. Details and field descriptions
+are in `tests/browser/diagnostics/README.md`.
 
 ## 7. Automated report capture
 

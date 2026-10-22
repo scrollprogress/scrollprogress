@@ -6,9 +6,8 @@ import {
     assertConsumerBundle
 } from './consumer-bundle-cases.mjs';
 import {
-    BROWSER_FIXTURE_FILES,
-    BENCHMARK_FIXTURE_FILES,
-    hashFixtureFiles
+    copyFixtureFiles,
+    fixtureIdentity
 } from '../tests/browser/tooling/browser-fixture-hash.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -288,11 +287,7 @@ const productionThemes = await buildConsumerThemes(directory, pkg.name);
 
 // Copy the committed browser fixture so every browser import resolves from this
 // real installation. No repository source aliases or package symlinks are used.
-mkdirSync(path.join(directory, 'browser'), { recursive: true });
-for (const file of BROWSER_FIXTURE_FILES) {
-    const contents = readFileSync(path.join(repository, 'tests/browser', file));
-    writeFileSync(path.join(directory, 'browser', file), contents);
-}
+copyFixtureFiles(path.join(repository, 'tests/browser'), path.join(directory, 'browser'));
 const report = {
     time: new Date().toISOString(),
     node: process.version,
@@ -345,11 +340,7 @@ writeFileSync(
             sha256: report.sha256,
             mode: report.mode,
             preparedAt: report.time,
-            fixtureSha256: hashFixtureFiles(path.join(repository, 'tests/browser')),
-            benchmarkFixtureSha256: hashFixtureFiles(
-                path.join(repository, 'tests/browser'),
-                BENCHMARK_FIXTURE_FILES
-            )
+            ...fixtureIdentity(path.join(repository, 'tests/browser'))
         },
         null,
         2
@@ -389,6 +380,7 @@ if (!options.serve) {
         console.log(`  Smoke tests:  ${base}`);
         console.log(`  Manual checks: ${new URL('manual.html', base).href}`);
         console.log(`  Benchmarks:    ${new URL('benchmark.html', base).href}`);
+        console.log(`  Diagnostics:   ${new URL('scroll-sync-diagnostic.html', base).href}`);
     }
     console.log('\nKeep this terminal open. Press Ctrl+C to stop.');
     console.log(

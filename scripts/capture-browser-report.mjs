@@ -154,7 +154,7 @@ try {
     assert.equal(report.status, smoke ? 'passed' : 'complete', JSON.stringify(report));
     assert.equal(report.schemaVersion, 1);
     if (!smoke) {
-        assert.equal(report.benchmarkVersion, 4);
+        assert.equal(report.benchmarkVersion, 5);
         assert.deepEqual(report.warnings, []);
         assert.deepEqual(
             report.scenarioIds,
