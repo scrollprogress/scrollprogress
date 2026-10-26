@@ -134,7 +134,7 @@ tracking; explicit aliases offer no geometry or performance advantage.
 
 `root: document` is normalized to the implicit viewport observer. An explicit
 Document observer root and the implicit viewport are equivalent in the main
-document; iframe and external-document coordination remain outside the RC1
+document; iframe and external-document coordination remain outside the 1.0.0
 contract. See [Choose a scroll root](scroll-progress-core.md#choose-a-scroll-root)
 for examples and [compatibility](compatibility.md#dom-and-document-boundaries)
 for DOM and scrolling constraints.

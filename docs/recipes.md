@@ -1,6 +1,6 @@
 # Recipes
 
-Install `@scrollprogress/scrollprogress@rc`, then use these examples in a browser
+Install `@scrollprogress/scrollprogress`, then use these examples in a browser
 application with a bundler. Each recipe is independent and includes the cleanup
 owned by that example.
 

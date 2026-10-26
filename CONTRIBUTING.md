@@ -4,8 +4,8 @@ ScrollProgress is licensed under the [MIT License](LICENSE). Contributions are
 welcome through the public repository at
 `https://github.com/scrollprogress/scrollprogress`.
 
-The current npm prerelease uses the `rc` dist-tag. This workflow applies to the
-release candidate and subsequent development.
+Stable npm releases use the `latest` dist-tag; release candidates use `rc`.
+This contribution workflow applies to both stable and prerelease development.
 
 Participation in the project is governed by the
 [Code of Conduct](https://github.com/scrollprogress/scrollprogress/blob/main/CODE_OF_CONDUCT.md).

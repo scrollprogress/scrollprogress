@@ -484,7 +484,7 @@ if (import.meta.hot) {
 - The selected target, custom root, overlay mount and browser globals must belong to
   the same document.
 - Same-origin iframe and general `ownerDocument` / `defaultView` support are not
-  available in RC1.
+  available in 1.0.0.
 - Viewport-level horizontal tracking can behave differently across mobile browsers. A custom horizontal root is the recommended component-level use case.
 - The overlay is a development tool and should not be treated as part of the production interface.
 

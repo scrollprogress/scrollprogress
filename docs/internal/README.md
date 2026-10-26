@@ -17,6 +17,6 @@ Release maintainers also use:
 
 - [Compatibility evidence](compatibility-evidence.md);
 - [Release procedure](release.md);
-- [RC1 release record](release-map.md).
+- [Release status and records](release-map.md).
 
 Public consumer documentation remains in the parent `docs/` directory.

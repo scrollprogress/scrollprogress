@@ -4,12 +4,10 @@ ScrollProgress is a small, dependency-free browser library for turning an elemen
 position inside a viewport or scroll container into a progress value between `0`
 and `1`.
 
-The current release candidate is
-`@scrollprogress/scrollprogress@1.0.0-rc.1`. It is ESM-only and includes TypeScript
-declarations.
+The package is ESM-only and includes TypeScript declarations.
 
 ```sh
-npm install @scrollprogress/scrollprogress@rc
+npm install @scrollprogress/scrollprogress
 ```
 
 Use the scoped package name shown above. The unscoped `scrollprogress` package on

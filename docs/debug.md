@@ -465,8 +465,11 @@ Destruction removes the palette DOM, listeners and subscriptions; it does not
 unregister tracked items.
 
 On narrow screens the palette becomes a bottom drawer. Desktop drag positioning
-has no keyboard equivalent in RC1. The palette is development tooling and should
+has no keyboard equivalent in 1.0.0. The palette is development tooling and should
 not be mounted in a production interface.
+
+Rendering large, frequently updating tracker lists can reduce frame rate,
+especially when the overlay is also active.
 
 ## Compose bridge, logger, palette and overlay manually
 
@@ -593,7 +596,7 @@ The returned controller exposes `id`, `update()` and an idempotent `destroy()`.
 array replaces that entire array; `footerActions: []` removes all footer actions.
 After destruction, further updates are ignored.
 
-Button and toggle groups are the supported RC1 extension boundary. Arbitrary
+Button and toggle groups are the supported 1.0.0 extension boundary. Arbitrary
 markup, custom renderers and direct palette DOM access are not public APIs.
 
 Public palette types:
@@ -694,7 +697,7 @@ included themes, custom properties and copyable templates.
 
 Debug modules can be imported without creating DOM. Constructing a palette or
 overlay requires browser globals, and their embedded `<style>` elements must be
-allowed by the application's content security policy. RC1 does not provide a nonce
+allowed by the application's content security policy. Version 1.0.0 does not provide a nonce
 option.
 
 Destroy debug controllers during component teardown or HMR. A debug session owns
