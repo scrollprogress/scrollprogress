@@ -8,18 +8,24 @@ development history is intentionally omitted.
 
 ## 1.0.0 preparation status
 
-As of 2026-10-26, stable metadata and documentation are being prepared on `dev`,
-starting from integration commit `ef7ab0521974b07746a93ba97d8cd89688c96dcb`.
-The stable candidate has not yet passed its final gates or been published.
+As of 2026-10-26, the local stable candidate is
+`e5e355ceafcb6c4362b22ac15141dffdfce26d8e` on `dev`, following integration commit
+`ef7ab0521974b07746a93ba97d8cd89688c96dcb`. Local verification is recorded below;
+the release PR, CI on the resulting `main` commit, staging and publication remain
+pending. Version `1.0.0` has not been published.
 
-| Checkpoint                          | Status                                  |
-| ----------------------------------- | --------------------------------------- |
-| Metadata and migration guidance     | Prepared for review                     |
-| Final automated and browser gates   | Pending for the stable archive          |
-| Candidate SHA-256 and npm integrity | Pending; no stable archive retained yet |
-| Release PR, commit and tag          | Pending                                 |
-| Staging identity comparison         | Pending                                 |
-| Registry installation verification  | Pending                                 |
+| Checkpoint                          | Status                                            |
+| ----------------------------------- | ------------------------------------------------- |
+| Metadata and migration guidance     | Reviewed; committed as `5e6a311`                  |
+| Development-tool security updates   | Committed as `e5e355c`; installation audit clean  |
+| Local automated gates               | Maintainer reports `verify` and `play:build` PASS |
+| External installed-tarball consumer | Saved report confirms all 17 checks               |
+| Desktop smoke                       | Chrome, Firefox and Safari: 15/15 PASS each       |
+| Focused manual pass                 | Chrome: guided checks confirmed; report retained  |
+| Candidate archive                   | Retained with SHA-256 and npm integrity below     |
+| Release PR, final commit and tag    | Pending                                           |
+| Staging identity comparison         | Pending                                           |
+| Registry installation verification  | Pending                                           |
 
 The registry was checked read-only on 2026-10-26: `rc` resolves to
 `1.0.0-rc.1`, `latest` resolves to `0.0.0-stage`, and `1.0.0` is not published.
@@ -27,10 +33,57 @@ Recheck these values before staging and after publication; metadata preparation
 does not change registry state. No open GitHub issues were returned by the same
 day's read-only check; that does not establish the absence of private RC feedback.
 
+## Stable candidate evidence
+
+The retained external-consumer archive contains 86 files, 69,073 packed bytes and
+279,581 unpacked bytes. Its identity is:
+
+```text
+SHA-256: 99140bac524cd2d852d40a89b7ee8983759d8b84ed1db86828e6ea6034a19ec6
+npm integrity: sha512-KnbyX187dFi2jWyHhLzk9RFnKfr/uNVH6DXe9oQ5N71TSI1B1zXgtWCVgy49oxmIJYHA7AYIGv+4dwF9XW19Uw==
+```
+
+Evidence is retained locally under `test-results/reports/v1-1.0.0-e5e355c/`:
+the archive, external consumer report, candidate identity, compiler-output
+comparison, three smoke reports and the Chrome manual report. Companion smoke
+and manual summaries preserve raw-report hashes and distinguish independent
+report checks from maintainer confirmations. Raw browser reports are unchanged.
+
+The maintainer reported `npm run verify` and `npm run play:build` passing before
+committing the same development-tool updates. Independently checked: the archive
+matches the consumer report and current packaged files, all three smoke reports
+match its SHA-256 and contain 15/15 PASS with null `metadataError`, and the manual
+report's identity and snapshots are consistent.
+
+The guided Chrome pass covered viewport/custom roots on both axes, reverse
+scrolling, resize, inversion, `once`, debug views/controls/keyboard access,
+destruction, CSS persistence and recreation. Visual results were confirmed by the
+maintainer in the release conversation. The raw manual checklist remains
+`not-tested`; the recorded actions and confirmations are retained separately,
+not converted into an automatic PASS.
+
+Coverage limits of the saved browser fixtures: Firefox and Safari have smoke
+reports only; physical mobile and a separate manual observer-option pass have no
+retained reports. Manual environment observation fields remain empty. The maintainer accepts the captured
+user-agent/environment values without additional manual field entry. These
+limits do not establish a failure, and no untested environment is certified.
+
+The tools used were Node 24.18.0, npm 11.16.0, Vite 8.1.6, Vitest 4.1.12 and
+Happy DOM 21.0.4. The dependency installation reported zero audit vulnerabilities;
+this observation is dated, not a guarantee about future advisories.
+
+## Prior local RC-version evidence
+
 Earlier installed-package reports identify tarball SHA-256
 `c19ae25d6436ad238da24b04d8c65bb52a23af4ca8b74b1fa8a3131ef6394bd8`.
 They remain evidence for that RC-version archive, not a verification record for
-the future stable archive. Benchmark v4 and v5 reports remain distinct series.
+the stable archive. Benchmark v4 and v5 reports remain distinct series.
+
+Library source, browser fixtures and TypeScript declarations are unchanged from
+that baseline. Updated Vite/Rolldown/Oxc changes the generated JavaScript: the
+reviewed differences are three equivalent boolean rewrites and dependent chunk
+filenames/imports. Other normalized `dist/` files are identical. Do not describe
+the stable `dist/` as byte-identical to the RC baseline.
 
 ## Candidate surface
 
