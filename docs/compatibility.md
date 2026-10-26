@@ -57,7 +57,7 @@ These APIs are not required by the core tracker or `readScrollProgress()`.
 Targets, element roots, and an explicit `Document` root must belong to or be the
 current `document`. External documents and iframe documents remain outside the
 supported contract; cross-document and same-origin iframe coordination are not
-supported in RC1.
+supported in 1.0.0.
 
 Viewport aliases are `null`, the current `document`, `document.documentElement`
 and `document.body` when it equals `document.scrollingElement`. They resolve to
@@ -140,10 +140,10 @@ Other debug limitations:
 
 - Overlay geometry is a rectangular diagnostic approximation. Native
   `IntersectionObserver` remains authoritative for tracking flags.
-- Drag positioning in the palette has no keyboard equivalent in RC1.
+- Drag positioning in the palette has no keyboard equivalent in 1.0.0.
 - Debug views are development tools and are not intended as production UI.
 
-## Not included in RC1
+## Not included in 1.0.0
 
 - CommonJS output;
 - legacy browser polyfills;

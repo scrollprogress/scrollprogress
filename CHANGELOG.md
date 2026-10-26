@@ -3,7 +3,17 @@
 This changelog starts with the first public release candidate. Internal development
 history before that point is intentionally omitted.
 
-## Unreleased
+## 1.0.0
+
+### Migration from 1.0.0-rc.1
+
+- `readScrollProgress()` now returns `number | null`. This is a breaking type change
+  for RC consumers: handle `null` when the target is detached or has no layout box
+  before using the result as a number.
+- After changing the effective root or `requireRootVisible`, `getState()` may
+  temporarily return `null` until the next animation frame. Handle that result or
+  subscribe to the replacement state. Switching equivalent viewport aliases does
+  not clear state.
 
 ### Fixed
 
@@ -27,7 +37,6 @@ history before that point is intentionally omitted.
 
 - Declare CSS files as package side effects so supporting bundlers can remove
   unused JavaScript while retaining explicitly imported debug themes.
-
 - Warn once per tracker for a measured non-positive travel distance (`D <= 0`)
   instead of warning solely on `start <= end`. Valid measured ranges stay silent;
   configuration changes are diagnosed at the next measurement, preserving the

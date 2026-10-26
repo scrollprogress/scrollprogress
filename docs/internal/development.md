@@ -133,11 +133,11 @@ package, so run `npm run lib:build` first when invoking them separately
 in a fresh checkout.
 
 `verify` stops at its first failure and retains both TypeScript and ESLint checks.
-Its results apply to the exact candidate tested; see the RC status for the public
+Its results apply to the exact candidate tested; see the release status for the public
 verification summary.
 It includes the aggregate `check` through `lint`, so errors in the playground,
 tests or build configuration still block the complete gate. Current release
-boundaries are recorded in the [RC status](release-map.md).
+boundaries are recorded in the [release status](release-map.md).
 
 `pack:check` does not replace `npm test`. `consumer:check` builds before packing so
 it cannot silently inspect old output. In `verify`, the consumer script follows
